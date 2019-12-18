@@ -8,6 +8,7 @@ __version__ = '0.00.1'
 
 setup(name='pystem',version=__version__,
       ext_modules=[Extension("_stemdescriptor", ["_stemdescriptor.c", "calculate_descriptor.c"],depends=['calculatedescriptor.h'])],
+      py_modules=['stemsegmentation','stemdescriptor','stemclustering'],
       include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs(),
       description = 'A python module for segmentation of STEM images',
       long_description=long_description,
