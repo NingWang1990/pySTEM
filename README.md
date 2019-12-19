@@ -1,4 +1,4 @@
-# Project Title
+# Automatic segmentation of STEM images
 
 Automatic segmentation of Scanning Transmission Electron Microscope (STEM) images based on the local-correlation-map descriptor
 
