@@ -7,7 +7,8 @@ with open("README.md", "r") as fh:
 __version__ = '0.0.1'
 
 setup(name='pystem',version=__version__,
-      ext_modules=[Extension("_stemdescriptor", ["_stemdescriptor.c", "calculate_descriptor.c"],depends=['calculatedescriptor.h'])],
+      ext_modules=[Extension("_stemdescriptor", ["_stemdescriptor.c", "calculate_descriptor.c"],
+                   depends=['calculatedescriptor.h'],extra_compile_args=['-fopenmp'])],
       py_modules=['stemsegmentation','stemdescriptor','stemclustering'],
       include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs(),
       description = 'A python module for segmentation of STEM images',
