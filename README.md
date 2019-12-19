@@ -25,4 +25,4 @@ python setup.py install --user
 ```
 
 ### How to use
-An example can be found in the example folder 
+An example can be found in the examples folder 
