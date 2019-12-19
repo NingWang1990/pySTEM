@@ -23,3 +23,6 @@ cd pySTEM/pySTEM
 python setup.py build
 python setup.py install --user
 ```
+
+### How to use
+An example can be found in the example folder 
