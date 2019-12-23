@@ -4,7 +4,7 @@ from distutils.core import setup, Extension
 import numpy.distutils.misc_util
 with open("README.md", "r") as fh:
     long_description = fh.read()
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 setup(name='pystem',version=__version__,
       ext_modules=[Extension("_stemdescriptor", ["_stemdescriptor.c", "calculate_descriptor.c"],
@@ -14,7 +14,7 @@ setup(name='pystem',version=__version__,
       description = 'A python module for segmentation of STEM images',
       long_description=long_description,
       long_description_content_type="text/markdown",
-      url = 'https://github.com/jkent/python-bchlib',
+      url = 'https://github.com/NingWang1990/pySTEM',
       author = 'Ning Wang',
       author_email = 'nwang@mpie.de',
       maintainer = 'Ning Wang',
