@@ -46,6 +46,7 @@ class segmentationSTEM:
         pca = PCA(n_components)
         shape = descriptors.shape
         self._PCA_components = np.reshape(pca.fit_transform(np.reshape(descriptors,(-1,shape[2]))), (shape[0],shape[1],n_components))
+        del descriptors
         return self._PCA_components
 
     def perform_clustering(self, image):
