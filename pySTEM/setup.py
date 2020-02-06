@@ -4,7 +4,7 @@ from distutils.core import setup, Extension
 import numpy.distutils.misc_util
 with open("README.md", "r") as fh:
     long_description = fh.read()
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 setup(name='pystem',version=__version__,
       ext_modules=[Extension("_stemdescriptor", ["_stemdescriptor.c", "calculate_descriptor.c"],
