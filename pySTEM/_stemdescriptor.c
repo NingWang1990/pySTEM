@@ -50,18 +50,16 @@ PyMODINIT_FUNC PyInit__stemdescriptor(void)
 /*  define the function */
 static PyObject *stemdescriptor_calc(PyObject *self, PyObject *args)
 {
-	
-      PyObject *image_obj;
-      PyObject *descriptor_obj;
-      printf("here now");
+      PyObject *image_obj=NULL;
+      PyObject *descriptor_obj=NULL;
       int num_rows,num_cols, patch_x, patch_y, region_x, region_y,region_grid_x,region_grid_y,n_descriptors;
       /* Parse the input tuple */
       if (!PyArg_ParseTuple(args,"OOiiiiiiiii",&image_obj,&descriptor_obj,&num_rows,&num_cols,&patch_x,&patch_y,
-		                             &region_x,&region_y,&region_grid_x,&region_grid_y,&n_descriptors))
-	  return NULL;
-
+      		                             &region_x,&region_y,&region_grid_x,&region_grid_y,&n_descriptors))
+       	  return NULL;
       /* Interpret the input objects as numpy arrays. */
-      PyObject * image_array = PyArray_FROM_OTF(image_obj,NPY_FLOAT32, NPY_IN_ARRAY);
+      PyObject * image_array=NULL;
+      image_array = PyArray_FROM_OTF(image_obj,NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
 
       /* throw an exception if that didn't work */
       if (image_array == NULL){
@@ -69,22 +67,33 @@ static PyObject *stemdescriptor_calc(PyObject *self, PyObject *args)
           return NULL;
       }
       /* Interpret the output objects as numpy arrays. */
-      PyObject * descriptor_array = PyArray_FROM_OTF(descriptor_obj,NPY_FLOAT32,NPY_IN_ARRAY);
-
+      PyObject * descriptor_array=NULL;
+#if NPY_API_VERSION >= 0x0000000c
+      descriptor_array = PyArray_FROM_OTF(descriptor_obj,NPY_FLOAT32,NPY_ARRAY_INOUT_ARRAY2);
+#else
+      descriptor_array = PyArray_FROM_OTF(descriptor_obj,NPY_FLOAT32,NPY_ARRAY_INOUT_ARRAY);
+#endif
       /* throw an exception if that didn't work */
       if (descriptor_array == NULL){
-          PyArray_XDECREF_ERR(descriptor_array);
+	  Py_XDECREF(image_array);
+#if NPY_API_VERSION >= 0x0000000c
+          PyArray_DiscardWritebackIfCopy(descriptor_array);
+#endif
+          Py_XDECREF(descriptor_array);
+	  return NULL;
       }
       float *image = (float*) PyArray_DATA(image_array);
       float *descriptor = (float*) PyArray_DATA(descriptor_array);
       /* call the external C function to compute the local-correlation-map descriptor */
       int value = calc_descriptor(image,descriptor,num_rows, num_cols,patch_x,patch_y,region_x,region_y,
-                                          region_grid_x,region_grid_y,n_descriptors);
+                                         region_grid_x,region_grid_y,n_descriptors);
 
-     
-
+      Py_DECREF(image_array);
+#if NPY_API_VERSION >= 0x0000000c
+      PyArray_ResolveWritebackIfCopy(descriptor_array);
+#endif
+      Py_DECREF(descriptor_array);
       Py_INCREF(Py_None);
-
 
       return Py_None;
 

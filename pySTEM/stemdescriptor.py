@@ -28,8 +28,7 @@ def get_descriptor(image, patch_x=11,patch_y=5,window_x=51,window_y=51,num_point
         grid += 1
         num_shifts = get_num_shifts(window_x,window_y,grid)
     n_descriptors = num_shifts
-    
     descriptors = np.zeros(((num_rows-2*(patch_x+window_x))*(num_cols-2*(patch_y+window_y))*n_descriptors),np.float32)
     _stemdescriptor.calc(np.reshape(image,-1),descriptors,num_rows,num_cols,patch_x,patch_y,
-                 window_x,window_y,grid,grid,n_descriptors )
+                          window_x,window_y,grid,grid,n_descriptors )
     return np.reshape(descriptors, (num_rows-2*(patch_x+window_x),num_cols-2*(patch_y+window_y),n_descriptors))

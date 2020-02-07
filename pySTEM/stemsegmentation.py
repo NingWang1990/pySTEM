@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.decomposition import PCA
 from stemclustering import stemClustering
 from stemdescriptor import get_descriptor
+import gc
 
 class segmentationSTEM:
     def __init__(self,n_patterns=2, patch_x=20,patch_y=20,window_x=21,window_y=21,
@@ -46,7 +47,6 @@ class segmentationSTEM:
         pca = PCA(n_components)
         shape = descriptors.shape
         self._PCA_components = np.reshape(pca.fit_transform(np.reshape(descriptors,(-1,shape[2]))), (shape[0],shape[1],n_components))
-        del descriptors
         return self._PCA_components
 
     def perform_clustering(self, image):
