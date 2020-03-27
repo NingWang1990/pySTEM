@@ -37,9 +37,11 @@ float correlation_coefficient(float *image, int num_cols,int patch_x, int patch_
 	}
 	a_mean = sum_a / length;
 	b_mean = sum_b / length;
-        corr_ef = (sum_ab - length*a_mean*b_mean)/(sqrtf(sum_aa-length*a_mean*a_mean)*sqrtf(sum_bb-length*b_mean*b_mean));
+	corr_ef = (sum_ab - length*a_mean*b_mean)/(sqrtf(sum_aa-length*a_mean*a_mean)*sqrtf(sum_bb-length*b_mean*b_mean));
         return corr_ef; 	
 }	
+
+
 
 
 int calc_descriptor(float *image,float*descriptor, int num_rows, int num_cols, int patch_x, int patch_y, int region_x, int region_y, int region_grid_x, int region_grid_y,int n_descriptors)
@@ -60,7 +62,7 @@ int calc_descriptor(float *image,float*descriptor, int num_rows, int num_cols, i
 	     {
              index = (i-patch_x-region_x)*(num_cols-2*(patch_y+region_y))*n_descriptors + (j-patch_y-region_y)*n_descriptors + index_l;
 	     *(descriptor+index) = correlation_coefficient(image, num_cols,patch_x,patch_y,i,j,k,l);
-             index_l += 1;
+	     index_l += 1;
 	     }
 	   }
 	 }	
