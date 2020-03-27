@@ -106,6 +106,8 @@ class segmentationSTEM:
         shape_image = image.shape
         window_x = self.paras['window_x']
         window_y = self.paras['window_y']
+        patch_x = self.paras['patch_x']
+        patch_y = self.paras['patch_y']
         if self.paras['descriptor_name'] is 'power_spectrum':
             self._segmentation_labels[window_x:(shape_image[0]-window_x),window_y:(shape_image[1]-window_y)] =\
                    np.reshape(kmeans.labels_, (shape[0], shape[1]))
