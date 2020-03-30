@@ -3,6 +3,9 @@
 todo:
 
 to remove ambiguity regarding patch_x,patch_y,window_x,window_y
+
+upsampling regarding rotational_symmetry_maximums descriptors
+
 """
 
 
@@ -11,11 +14,13 @@ from sklearn.decomposition import PCA
 from stemclustering import stemClustering
 from stemdescriptor import get_descriptor
 from stempower_spectrum import get_power_spectrum
+from stemrotational_symmetry_descriptors import get_rotational_symmetry_descriptors
+from stemreflection_symmetry_descriptors import get_reflection_symmetry_descriptors
 from sklearn.cluster import KMeans
 
 import gc
 
-descriptors_implemented = ['power_spectrum','local_correlation_map']
+descriptors_implemented = ['power_spectrum','local_correlation_map','rotational_symmetry_maximums','reflection_symmetry_maximums']
 
 class segmentationSTEM:
     def __init__(self,n_patterns=2, 
@@ -24,7 +29,11 @@ class segmentationSTEM:
                  n_PCA_components=5,
                  pca_fitted=None,kmeans_init_centers=None,
                  one_step_kmeans=False,
-                 #parameters assicated with local_correlation_map descriptors
+                 # 
+                 num_reflection_plane=10,
+                 # parameters associated with rotational with rotational_symmetry_maximums descriptors
+                 radius=20,nr=20,nt=60,step_symmetry_analysis=5,num_max=10,
+                 #parameters associated with local_correlation_map descriptors
                  patch_x=20,patch_y=20, max_num_points=100, parallel=True,
                  #
                  ):
@@ -57,6 +66,12 @@ class segmentationSTEM:
                       'window_x':window_x,
                       'window_y':window_y,
                       'descriptor_name':descriptor_name,
+                      'radius':radius,
+                      'nr':nr,
+                      'nt':nt,
+                      'step_symmetry_analysis':step_symmetry_analysis,
+                      'num_max': num_max,
+                      'num_reflection_plane': num_reflection_plane,
                       'pca_fitted':pca_fitted,
                       'kmeans_init_centers':kmeans_init_centers,
                       'one_step_kmeans':one_step_kmeans,
@@ -75,6 +90,16 @@ class segmentationSTEM:
                                         parallel=self.paras['parallel'])
         elif self.paras['descriptor_name'] is 'power_spectrum':
             descriptors = get_power_spectrum(image,2*self.paras['window_x'],2*self.paras['window_y'])
+        elif self.paras['descriptor_name'] is 'rotational_symmetry_maximums':
+            descriptors = get_rotational_symmetry_descriptors(image, window_x=self.paras['window_x'], window_y=self.paras['window_y'],
+                                                              radius=self.paras['radius'],nr=self.paras['nr'], nt=self.paras['nt'],
+                                                              num_max=self.paras['num_max'],step_symmetry_analysis=self.paras['step_symmetry_analysis'])
+        elif self.paras['descriptor_name'] is 'reflection_symmetry_maximums':
+            descriptors = get_reflection_symmetry_descriptors(image,window_x=self.paras['window_x'],window_y=self.paras['window_y'],
+                                                              radius=self.paras['radius'],nr=self.paras['nr'], nt=self.paras['nt'],
+                                                              num_reflection_plane=self.paras['num_reflection_plane'],
+                                                              step_symmetry_analysis=self.paras['step_symmetry_analysis'],num_max=self.paras['num_max'])
+            
         n_components = self.paras['n_PCA_components']
         shape = descriptors.shape
         if self.paras['pca_fitted'] is None:
@@ -111,6 +136,10 @@ class segmentationSTEM:
         if self.paras['descriptor_name'] is 'power_spectrum':
             self._segmentation_labels[window_x:(shape_image[0]-window_x),window_y:(shape_image[1]-window_y)] =\
                    np.reshape(kmeans.labels_, (shape[0], shape[1]))
+        elif self.paras['descriptor_name'] is 'rotational_symmetry_maximums':
+            self._segmentation_labels = np.reshape(kmeans.labels_, (shape[0], shape[1]))
+        elif self.paras['descriptor_name'] is 'reflection_symmetry_maximums':
+            self._segmentation_labels = np.reshape(kmeans.labels_, (shape[0], shape[1]))
         elif self.paras['descriptor_name'] is 'local_correlation_map':
             self._segmentation_labels[(window_x+patch_x):(shape_image[0]-window_x-patch_x),(window_y+patch_y):(shape_image[0]-window_y-patch_y)] =\
                    np.reshape(kmeans.labels_, (shape[0], shape[1]))

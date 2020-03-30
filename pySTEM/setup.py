@@ -4,12 +4,13 @@ from distutils.core import setup, Extension
 import numpy.distutils.misc_util
 with open("README.md", "r") as fh:
     long_description = fh.read()
-__version__ = '0.0.9'
+__version__ = '0.0.10'
 
 setup(name='pystem',version=__version__,
       ext_modules=[Extension("_stemdescriptor", ["_stemdescriptor.c", "calculate_descriptor.c"],
                    depends=['calculatedescriptor.h'],extra_compile_args=['-fopenmp'])],
-      py_modules=['stemsegmentation','stemdescriptor','stemclustering','stempower_spectrum'],
+      py_modules=['stemsegmentation','stemdescriptor','stemclustering','stempower_spectrum',
+                  'stemrotational_symmetry_descriptors','stemreflection_symmetry_descriptors'],
       include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs(),
       description = 'A python module for segmentation of STEM images',
       long_description=long_description,
