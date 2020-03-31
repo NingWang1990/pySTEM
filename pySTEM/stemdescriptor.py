@@ -12,7 +12,7 @@ def get_num_shifts(window_x,window_y,grid):
     return n_x*n_y
 
 
-def get_descriptor(image, patch_x=11,patch_y=5,window_x=51,window_y=51,num_points=100,parallel=True):
+def get_descriptor(image, patch_x=11,patch_y=5,window_x=51,window_y=51,num_points=100,step=3,parallel=True):
 
     if num_points <=2:
         raise ValueError('increase num_points')
@@ -28,7 +28,13 @@ def get_descriptor(image, patch_x=11,patch_y=5,window_x=51,window_y=51,num_point
         grid += 1
         num_shifts = get_num_shifts(window_x,window_y,grid)
     n_descriptors = num_shifts
-    descriptors = np.zeros(((num_rows-2*(patch_x+window_x))*(num_cols-2*(patch_y+window_y))*n_descriptors),np.float32)
+    shape = image.shape
+    x_index = np.arange(window_x+patch_x, shape[0]-window_x-patch_x, step)
+    y_index = np.arange(window_y+patch_y, shape[1]-window_y-patch_y, step)
+    descriptors = np.zeros((len(x_index),len(y_index),n_descriptors),dtype=np.float32)
+    num_rows_desp = len(descriptors)
+    num_cols_desp = len(descriptors[0])
+    descriptors = descriptors.flatten()
     _stemdescriptor.calc(np.reshape(image,-1),descriptors,num_rows,num_cols,patch_x,patch_y,
-                          window_x,window_y,grid,grid,n_descriptors )
-    return np.reshape(descriptors, (num_rows-2*(patch_x+window_x),num_cols-2*(patch_y+window_y),n_descriptors))
+                          window_x,window_y,grid,grid,n_descriptors,step,num_rows_desp,num_cols_desp )
+    return np.reshape(descriptors, (len(x_index), len(y_index), n_descriptors))

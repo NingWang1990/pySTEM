@@ -52,10 +52,10 @@ static PyObject *stemdescriptor_calc(PyObject *self, PyObject *args)
 {
       PyObject *image_obj=NULL;
       PyObject *descriptor_obj=NULL;
-      int num_rows,num_cols, patch_x, patch_y, region_x, region_y,region_grid_x,region_grid_y,n_descriptors;
+      int num_rows,num_cols, patch_x, patch_y, region_x, region_y,region_grid_x,region_grid_y,n_descriptors, step,num_rows_desp,num_cols_desp;
       /* Parse the input tuple */
-      if (!PyArg_ParseTuple(args,"OOiiiiiiiii",&image_obj,&descriptor_obj,&num_rows,&num_cols,&patch_x,&patch_y,
-      		                             &region_x,&region_y,&region_grid_x,&region_grid_y,&n_descriptors))
+      if (!PyArg_ParseTuple(args,"OOiiiiiiiiiiii",&image_obj,&descriptor_obj,&num_rows,&num_cols,&patch_x,&patch_y,
+      		                             &region_x,&region_y,&region_grid_x,&region_grid_y,&n_descriptors,&step,&num_rows_desp,&num_cols_desp))
        	  return NULL;
       /* Interpret the input objects as numpy arrays. */
       PyObject * image_array=NULL;
@@ -86,7 +86,7 @@ static PyObject *stemdescriptor_calc(PyObject *self, PyObject *args)
       float *descriptor = (float*) PyArray_DATA(descriptor_array);
       /* call the external C function to compute the local-correlation-map descriptor */
       int value = calc_descriptor(image,descriptor,num_rows, num_cols,patch_x,patch_y,region_x,region_y,
-                                         region_grid_x,region_grid_y,n_descriptors);
+                                         region_grid_x,region_grid_y,n_descriptors,step,num_rows_desp,num_cols_desp);
 
       Py_DECREF(image_array);
 #if NPY_API_VERSION >= 0x0000000c

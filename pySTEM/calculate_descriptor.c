@@ -44,23 +44,27 @@ float correlation_coefficient(float *image, int num_cols,int patch_x, int patch_
 
 
 
-int calc_descriptor(float *image,float*descriptor, int num_rows, int num_cols, int patch_x, int patch_y, int region_x, int region_y, int region_grid_x, int region_grid_y,int n_descriptors)
+int calc_descriptor(float *image,float*descriptor, int num_rows, int num_cols, int patch_x, int patch_y, int region_x, int region_y, int region_grid_x, int region_grid_y,int n_descriptors,int step,int num_rows_desp, int num_cols_desp)
 {
         #pragma omp parallel
 	{
 	int i,j;
+	int i_d, j_d;
 	int k, l, index, index_l;
 	#pragma omp for
-        for (i=patch_x+region_x;i<num_rows-patch_x-region_x;i++)
+        for (i=patch_x+region_x;i<num_rows-patch_x-region_x;i+=step)
 	{
-	  for (j=patch_y+region_y;j<num_cols-patch_y-region_y;j++)
+	  for (j=patch_y+region_y;j<num_cols-patch_y-region_y;j+=step)
 	  {
            index_l = 0;
+	   i_d = (i-patch_x-region_x)/step;
+	   j_d = (j-patch_y-region_y)/step;
 	   for (k=-region_x;k<=region_x;k+=region_grid_x)
 	   {
 	     for (l=-region_y;l<=region_y;l+=region_grid_y)
 	     {
-             index = (i-patch_x-region_x)*(num_cols-2*(patch_y+region_y))*n_descriptors + (j-patch_y-region_y)*n_descriptors + index_l;
+	     
+             index = i_d*num_cols_desp*n_descriptors + j_d*n_descriptors + index_l;
 	     *(descriptor+index) = correlation_coefficient(image, num_cols,patch_x,patch_y,i,j,k,l);
 	     index_l += 1;
 	     }

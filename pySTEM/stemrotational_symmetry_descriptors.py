@@ -12,7 +12,7 @@ def get_rotational_symmetry_descriptors(image,window_x=20, window_y=20,radius=20
         num_max = (2*window_x+1)*(2*window_y+1)
     for i,ii in enumerate(x_index):
         for j,jj in enumerate(y_index):
-            des_window = image_symmetry[(ii-window_x):(ii+window_x+1),(jj-window_y):(jj+window_y+1),:]
+            des_window = image_symmetry[(ii-window_x):(ii+window_x+1),(jj-window_y):(jj+window_y+1),:].copy()
             des_window = np.reshape(des_window, (-1,4))
             
             # use partition to find n largest values
@@ -159,9 +159,10 @@ def reproject_image_into_polar(data, origin=(10,10),radius=10, Jacobian=True,
 
     """
     data = data.astype(np.float32)
-    imageW = data[(origin[0]-radius):(origin[0]+radius+1), (origin[1]-radius):(origin[1]+radius+1)]
+    imageW = data[(origin[0]-radius):(origin[0]+radius+1), (origin[1]-radius):(origin[1]+radius+1)].copy()
     imageW = imageW - np.mean(imageW)
-    imageW = imageW - np.std(imageW)
+    #imageW = imageW / np.std(imageW)
+    
     #imageW =  np.abs(np.fft.fft2(imageW))**2
     #imageW =  np.fft.fftshift(np.abs(np.fft.fft2(imageW))**2)
     #imageW = np.fft.fftshift(np.real(np.fft.ifft2(imageW)))
