@@ -91,7 +91,7 @@ class segmentationSTEM:
                                         step = self.paras['step'],
                                         parallel=self.paras['parallel'])
         elif self.paras['descriptor_name'] is 'power_spectrum':
-            descriptors = get_power_spectrum_m1(image,2*self.paras['window_x'],2*self.paras['window_y'], step=self.paras['step'],logarithm=self.paras['power_spectrum_logarithm'])
+            descriptors = get_power_spectrum_m1(image,self.paras['window_x'],self.paras['window_y'], step=self.paras['step'],logarithm=self.paras['power_spectrum_logarithm'])
         elif self.paras['descriptor_name'] is 'rotational_symmetry_maximums':
             descriptors = get_rotational_symmetry_descriptors(image, window_x=self.paras['window_x'], window_y=self.paras['window_y'],
                                                               radius=self.paras['radius'],nr=self.paras['nr'], nt=self.paras['nt'],
