@@ -150,6 +150,7 @@ class segmentationSTEM:
         image..............2D numpy array
         upsampling.........Boolean, if True, upsampling in order to match the shape of image.
         """
+        image = image.astype(np.float32)
         features = self.get_PCA_components(image)
         shape = features.shape
         if self.paras['one_step_kmeans'] is True:
