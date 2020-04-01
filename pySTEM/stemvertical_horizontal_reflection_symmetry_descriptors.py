@@ -25,7 +25,7 @@ def image_reflection_symmetry(image, patch_x=20, patch_y=20, step=1):
     for i in range(patch_x, shape[0]-patch_x, step):
         for j in range(patch_y, shape[1]-patch_y, step):
             image_patch = image[(i-patch_x):(i+patch_x+1),(j-patch_y):(j+patch_y+1)].copy()
-            image_patch -= np.mean(image_patch)
+            image_patch = image_patch - np.mean(image_patch)
             image_symmetry[i,j,0] = cross_autocorrelation(image_patch, np.flip(image_patch,axis=0))
             image_symmetry[i,j,1] = cross_autocorrelation(image_patch, np.flip(image_patch,axis=1))
     return image_symmetry

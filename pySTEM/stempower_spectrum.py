@@ -17,7 +17,7 @@ def get_power_spectrum_m1(image, window_x,window_y,step=5,logarithm=True):
     for i, ii in enumerate(x_index):
         for j, jj in enumerate(y_index):
             img_window = image[(ii-window_x):(ii+window_x+1), (jj-window_y):(jj+window_y+1)].copy()
-            img_window -= np.mean(img_window)
+            img_window = img_window - np.mean(img_window)
             #img_window /= np.std(img_window)
             img_window = img_window*hanning2d
             if logarithm == True:

@@ -131,7 +131,7 @@ def reproject_image_into_polar(data, origin=(10,10),radius=10, Jacobian=True,
     output = zi.reshape((nr, nt))
     
     if Jacobian:
-        output *= r_i[:, np.newaxis]
+        output = output * r_i[:, np.newaxis]
     #return imageW, r_grid, theta_grid
     return output, r_grid, theta_grid
 
