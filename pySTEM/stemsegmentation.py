@@ -27,6 +27,7 @@ class segmentationSTEM:
                  upsampling=True,
                  pca_fitted=None,kmeans_init_centers=None,
                  one_step_kmeans=False,
+                 removing_mean=True,
                  # 
                  num_reflection_plane=10,
                  # parameters associated with rotational with rotational_symmetry_maximums descriptors
@@ -65,6 +66,7 @@ class segmentationSTEM:
                       'window_x':window_x,
                       'window_y':window_y,
                       'descriptor_name':descriptor_name,
+                      'removing_mean': removing_mean,
                       'radius':radius,
                       'nr':nr,
                       'nt':nt,
@@ -89,7 +91,8 @@ class segmentationSTEM:
                                         self.paras['window_y'],
                                         self.paras['max_num_points'],
                                         step = self.paras['step'],
-                                        parallel=self.paras['parallel'])
+                                        parallel=self.paras['parallel'],
+                                        removing_mean=self.paras['removing_mean'])
         elif self.paras['descriptor_name'] is 'power_spectrum':
             descriptors = get_power_spectrum_m1(image,self.paras['window_x'],self.paras['window_y'], step=self.paras['step'],logarithm=self.paras['power_spectrum_logarithm'])
         elif self.paras['descriptor_name'] is 'rotational_symmetry_maximums':

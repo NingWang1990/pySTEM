@@ -7,7 +7,7 @@
 #include "calculate_descriptor.h"
 
 
-float correlation_coefficient(float *image, int num_cols,int patch_x, int patch_y,int i,int j,int k,int l)
+float correlation_coefficient(float *image, int num_cols,int patch_x, int patch_y,int i,int j,int k,int l, int removing_mean)
 {       float sum_ab = 0.0;
 	float sum_aa = 0.0;
 	float sum_bb = 0.0;
@@ -37,14 +37,17 @@ float correlation_coefficient(float *image, int num_cols,int patch_x, int patch_
 	}
 	a_mean = sum_a / length;
 	b_mean = sum_b / length;
-	corr_ef = (sum_ab - length*a_mean*b_mean)/(sqrtf(sum_aa-length*a_mean*a_mean)*sqrtf(sum_bb-length*b_mean*b_mean));
+	if (removing_mean == 1){
+	corr_ef = (sum_ab - length*a_mean*b_mean)/(sqrtf(sum_aa-length*a_mean*a_mean)*sqrtf(sum_bb-length*b_mean*b_mean));}
+	else {
+	corr_ef = (sum_ab)/(sqrtf(sum_aa)*sqrtf(sum_bb));}
         return corr_ef; 	
 }	
 
 
 
 
-int calc_descriptor(float *image,float*descriptor, int num_rows, int num_cols, int patch_x, int patch_y, int region_x, int region_y, int region_grid_x, int region_grid_y,int n_descriptors,int step,int num_rows_desp, int num_cols_desp)
+int calc_descriptor(float *image,float*descriptor, int num_rows, int num_cols, int patch_x, int patch_y, int region_x, int region_y, int region_grid_x, int region_grid_y,int n_descriptors,int step,int num_rows_desp, int num_cols_desp, int removing_mean)
 {
         #pragma omp parallel
 	{
@@ -65,7 +68,7 @@ int calc_descriptor(float *image,float*descriptor, int num_rows, int num_cols, i
 	     {
 	     
              index = i_d*num_cols_desp*n_descriptors + j_d*n_descriptors + index_l;
-	     *(descriptor+index) = correlation_coefficient(image, num_cols,patch_x,patch_y,i,j,k,l);
+	     *(descriptor+index) = correlation_coefficient(image, num_cols,patch_x,patch_y,i,j,k,l, removing_mean);
 	     index_l += 1;
 	     }
 	   }
