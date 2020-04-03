@@ -8,7 +8,11 @@ __version__ = '0.0.13'
 
 setup(name='pystem',version=__version__,
       ext_modules=[Extension("_stemdescriptor", ["_stemdescriptor.c", "calculate_descriptor.c"],
-                   depends=['calculatedescriptor.h'],extra_compile_args=['-fopenmp'])],
+                   depends=['calculatedescriptor.h'],extra_compile_args=['-fopenmp'], libraries=['gomp']),
+                   Extension("stemdescriptor2", ["stemdescriptor2.cpp", "FftCorr.cpp"],
+                   depends=['FftCorr.h'],extra_compile_args=['-fopenmp -Wall'],
+                   libraries=['fftw3','gomp'])
+                  ],
       py_modules=['stemsegmentation','stemdescriptor','stemclustering','stempower_spectrum',
                   'stemrotational_symmetry_descriptors','stemreflection_symmetry_descriptors'],
       include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs(),
