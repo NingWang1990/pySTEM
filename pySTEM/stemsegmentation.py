@@ -126,7 +126,7 @@ class segmentationSTEM:
         diff = shape_image[0] - len(x_index)
         diff_left = int( diff / 2.)
         diff_right = diff - diff_left
-        left_index = np.flip(-np.arange(1, 1+diff_left))
+        left_index = np.flip(-np.arange(1, 1+diff_left),axis=0)
         right_index = len(x_index)+np.arange(diff_right)
         x_index = np.concatenate((left_index, x_index, right_index))
 
@@ -134,7 +134,7 @@ class segmentationSTEM:
         diff = shape_image[1] - len(y_index)
         diff_left = int( diff / 2.)
         diff_right = diff - diff_left
-        left_index = np.flip(-np.arange(1, 1+diff_left))
+        left_index = np.flip(-np.arange(1, 1+diff_left),axis=0)
         right_index = len(y_index)+np.arange(diff_right)
         y_index = np.concatenate((left_index, y_index, right_index))
             
