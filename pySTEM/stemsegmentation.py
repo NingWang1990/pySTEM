@@ -115,7 +115,7 @@ class segmentationSTEM:
 
     def get_PCA_components(self, image):
         
-        descriptors = self.get_descriptors(self, image)
+        descriptors = self.get_descriptors( image)
         n_components = self.paras['n_PCA_components']
         shape = descriptors.shape
         if self.paras['pca_fitted'] is None:
