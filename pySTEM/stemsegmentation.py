@@ -3,6 +3,9 @@
 todo:
 
 to remove ambiguity regarding patch_x,patch_y,window_x,window_y
+extend soft_segmentation to n_patterns > 2 cases.
+store descriptors, and avoid double calculating the same image
+
 """
 
 
@@ -36,6 +39,7 @@ class segmentationSTEM:
                  patch_x=20,patch_y=20, max_num_points=100, parallel=True,
                  #
                  power_spectrum_logarithm=True,
+                 soft_segmentation=False,
                  ):
         
         """
@@ -80,9 +84,11 @@ class segmentationSTEM:
                       'n_PCA_components':n_PCA_components,
                       'max_num_points':max_num_points, 
                       'power_spectrum_logarithm':power_spectrum_logarithm,
+                      'soft_segmentation':soft_segmentation,
                       'parallel':parallel}
 
-    def get_PCA_components(self, image):
+    
+    def get_descriptors(self,image):    
         self.check_image_validity(image)
         if self.paras['descriptor_name'] is 'local_correlation_map':
             descriptors = get_descriptor(image,self.paras['patch_x'],
@@ -104,7 +110,12 @@ class segmentationSTEM:
                                                               radius=self.paras['radius'],nr=self.paras['nr'], nt=self.paras['nt'],
                                                               num_reflection_plane=self.paras['num_reflection_plane'],
                                                               step_symmetry_analysis=self.paras['step'],num_max=self.paras['num_max'])
-            
+        self._descriptors = descriptors 
+        return self._descriptors
+
+    def get_PCA_components(self, image):
+        
+        descriptors = self.get_descriptors(self, image)
         n_components = self.paras['n_PCA_components']
         shape = descriptors.shape
         if self.paras['pca_fitted'] is None:
@@ -144,8 +155,28 @@ class segmentationSTEM:
         coords = np.vstack((x_grid, y_grid))
         labels_up = map_coordinates(labels, coords,mode='nearest')
         labels_up = np.reshape(labels_up, (shape_image[1], shape_image[0])).T
-        labels_up = np.round(labels_up).astype(np.int32) % self.paras['n_patterns']
+        if self.paras['soft_segmentation'] is False:
+            labels_up = np.round(labels_up).astype(np.int32) % self.paras['n_patterns']
+        else:
+            labels_up = np.clip(labels_up,0.,self.paras['n_patterns']-1.)
         return labels_up
+
+    def perform_soft_segmentation(self, cluster_centers,features):
+        """
+        cluster_centers..........ndarray of shape(n_clusters, n_features)
+        features.................ndarray of shape(n_samples, n_features)
+        """
+        import scipy
+        (n_clusters, n_features) = cluster_centers.shape
+        (n_samples, n_features_t) = features.shape
+        if not (n_clusters == 2):
+            raise ValueError('currently only implemented for the two-clusters case')
+        if not (n_features == n_features_t):
+            raise ValueError('# of features not equal')
+        distances = np.zeros((n_samples, n_clusters))
+        for i in range(n_clusters):
+            distances[:,i] = np.linalg.norm(features - cluster_centers[i:i+1,:],axis=1)
+        return scipy.special.softmax(distances,axis=1)[:,0]
 
 
     def perform_clustering(self, image):
@@ -166,7 +197,12 @@ class segmentationSTEM:
             kmeans = KMeans(n_clusters=self.paras['n_patterns'],max_iter=max_iter,init=self.paras['kmeans_init_centers'])
         kmeans.fit(np.reshape(features,(-1,shape[2])))
         self._kmeans = kmeans
-        labels = np.reshape(kmeans.labels_, (shape[0],shape[1]))
+        if self.paras['soft_segmentation'] is False:
+            labels = np.reshape(kmeans.labels_, (shape[0],shape[1]))
+        else:
+            soft_labels = self.perform_soft_segmentation(kmeans.cluster_centers_, np.reshape(features,(-1,shape[2])))
+            labels = np.reshape(soft_labels, (shape[0],shape[1]))
+        # this line looks useless
         self._segmentation_labels = np.zeros_like(image,dtype=np.int32) - 1
         shape_image = image.shape
         window_x = self.paras['window_x']
