@@ -1,7 +1,7 @@
 import numpy as np
 import time
 import os
-#import _stemdescriptor
+import _stemdescriptor
 import stemdescriptor2 as fftstem
 
 
@@ -35,6 +35,7 @@ def get_good_fftsize(minsize):
 
 methods_implemented = ['direct', 'fft']
 def get_descriptor(image, patch_x=11,patch_y=5,window_x=51,window_y=51,num_points=100,step=3,parallel=True,removing_mean=True,method='direct'):
+    print ('method:', method)
     if method not in methods_implemented:
         raise ValueError('method should be in ', methods_implemented)
 
@@ -66,8 +67,10 @@ def get_descriptor(image, patch_x=11,patch_y=5,window_x=51,window_y=51,num_point
     # note: fft has first dimension run fastest
     fft = fftstem.WindowFFT (ffty, fftx)
     # compute descriptor
-    # _stemdescriptor.calc(np.reshape(image,-1),descriptors,num_rows,num_cols,patch_x,patch_y,
-    #                      window_x,window_y,grid,grid,n_descriptors,step,num_rows_desp,num_cols_desp,int(removing_mean))
-    fft.calc(np.reshape(image,-1),descriptors,num_rows,num_cols,patch_x,patch_y,
+    if method == 'direct':
+        _stemdescriptor.calc(np.reshape(image,-1),descriptors,num_rows,num_cols,patch_x,patch_y,
+                          window_x,window_y,grid,grid,n_descriptors,step,num_rows_desp,num_cols_desp,int(removing_mean))
+    else:
+        fft.calc(np.reshape(image,-1),descriptors,num_rows,num_cols,patch_x,patch_y,
                           window_x,window_y,grid,grid,n_descriptors,step,num_rows_desp,num_cols_desp)
     return np.reshape(descriptors, (len(x_index), len(y_index), n_descriptors))
