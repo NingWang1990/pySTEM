@@ -172,9 +172,10 @@ static PyObject *stemdescriptor2_calc(PyObject *self_, PyObject *args)
    /* throw an exception if that didn't work */
    if (descriptor_array == NULL){
       Py_XDECREF(image_array);
-#if NPY_API_VERSION >= 0x0000000c
+
+/*#if NPY_API_VERSION >= 0x0000000c
       PyArray_DiscardWritebackIfCopy(descriptor_array);
-#endif
+#endif */
       Py_XDECREF(descriptor_array);
       return NULL;
    }
@@ -211,9 +212,9 @@ static PyObject *stemdescriptor2_calc(PyObject *self_, PyObject *args)
    }
 
    Py_DECREF(image_array);
-#if NPY_API_VERSION >= 0x0000000c
+/*#if NPY_API_VERSION >= 0x0000000c
    PyArray_ResolveWritebackIfCopy(descriptor_array);
-#endif
+#endif */
    Py_DECREF(descriptor_array);
    Py_INCREF(Py_None);
 
