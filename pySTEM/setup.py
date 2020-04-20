@@ -10,7 +10,7 @@ setup(name='pystem',version=__version__,
       ext_modules=[Extension("_stemdescriptor", ["_stemdescriptor.c", "calculate_descriptor.c"],
                    depends=['calculatedescriptor.h'],extra_compile_args=['-fopenmp'], libraries=['gomp']),
                    Extension("stemdescriptor2", ["stemdescriptor2.cpp", "FftCorr.cpp"],
-                   depends=['FftCorr.h'],extra_compile_args=['-fopenmp -Wall'],
+                   depends=['FftCorr.h'],extra_compile_args=['-fopenmp'],
                    libraries=['fftw3','gomp'])
                   ],
       py_modules=['stemsegmentation','stemdescriptor','stemclustering','stempower_spectrum',

@@ -7,6 +7,7 @@
 #include <numpy/arrayobject.h>
 #include "FftCorr.h"
 #include <string.h>
+#include <new>
 //#include <iostream>
 
 extern "C" {
