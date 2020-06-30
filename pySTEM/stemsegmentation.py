@@ -18,6 +18,7 @@ from stemrotational_symmetry_descriptors import get_rotational_symmetry_descript
 from stemreflection_symmetry_descriptors import get_reflection_symmetry_descriptors
 from sklearn.cluster import KMeans
 from scipy.ndimage import map_coordinates
+from scipy.interpolate import NearestNDInterpolator
 import gc
 
 descriptors_implemented = ['power_spectrum','local_correlation_map','rotational_symmetry_maximums','reflection_symmetry_maximums']
@@ -158,12 +159,20 @@ class segmentationSTEM:
         x_grid = (x_grid / step).flatten()
         y_grid = (y_grid / step).flatten()
         coords = np.vstack((x_grid, y_grid))
-        labels_up = map_coordinates(labels, coords,mode='nearest')
-        labels_up = np.reshape(labels_up, (shape_image[1], shape_image[0])).T
         if self.paras['soft_segmentation'] is False:
-            labels_up = np.round(labels_up).astype(np.int32) % self.paras['n_patterns']
+            x_labels, y_labels = np.meshgrid(np.arange(shape_labels[0]),np.arange(shape_labels[1]),indexing='ij')
+            x_labels = x_labels.flatten()
+            y_labels = y_labels.flatten()
+            input_coords = np.vstack([x_labels, y_labels]).T
+            interpolator = NearestNDInterpolator(input_coords, labels.flatten())
+            labels_up = interpolator(coords.T)
+            labels_up = np.reshape(labels_up, shape_image).T
+            #labels_up = np.round(labels_up).astype(np.int32) % self.paras['n_patterns']
         else:
+            labels_up = map_coordinates(labels, coords,mode='nearest')
+            labels_up = np.reshape(labels_up, (shape_image[1], shape_image[0])).T
             labels_up = np.clip(labels_up,0.,self.paras['n_patterns']-1.)
+ 
         return labels_up
 
     def perform_soft_segmentation(self, cluster_centers,features):

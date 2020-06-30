@@ -3,6 +3,7 @@ from scipy.ndimage import map_coordinates
 import heapq
 
 def get_rotational_symmetry_descriptors(image,window_x=20, window_y=20,radius=20,nr=10,nt=60, num_max=10, step_symmetry_analysis=5):
+    num_max = np.min([num_max, (2*window_x+1)*(2*window_y+1)])
     image_symmetry = image_rotational_symmetry(image,radius=radius, nr=nr, nt=nt, step=step_symmetry_analysis)
     shape = image.shape
     x_index = np.arange(window_x+radius, shape[0]-window_x-radius,step_symmetry_analysis)
