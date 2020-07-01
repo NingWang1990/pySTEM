@@ -1,10 +1,21 @@
 #!/usr/bin/env python
+import os
+from pathlib import Path
+
+from ruamel.yaml import YAML
+from setuptools import setup, find_packages
+
+#PACKAGE NAME
+__package__ = 'pySTEM'
+
+
+
 import setuptools
 from distutils.core import setup, Extension
 import numpy.distutils.misc_util
 with open("README.md", "r") as fh:
     long_description = fh.read()
-__version__ = '0.0.13'
+__version__ = '0.0.14'
 
 setup(name='pystem',version=__version__,
       ext_modules=[Extension("_stemdescriptor", ["_stemdescriptor.c", "calculate_descriptor.c"],
