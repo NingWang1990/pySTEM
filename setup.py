@@ -1,31 +1,23 @@
 #!/usr/bin/env python
-import os
-from pathlib import Path
-
-from ruamel.yaml import YAML
-from setuptools import setup, find_packages
-
-#PACKAGE NAME
-__package__ = 'pySTEM'
-
-
-
 import setuptools
 from distutils.core import setup, Extension
 import numpy.distutils.misc_util
+from setuptools import find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
 __version__ = '0.0.14'
 
 setup(name='pystem',version=__version__,
-      ext_modules=[Extension("_stemdescriptor", ["_stemdescriptor.c", "calculate_descriptor.c"],
-                   depends=['calculatedescriptor.h'],extra_compile_args=['-fopenmp'], libraries=['gomp']),
-                   Extension("stemdescriptor2", ["stemdescriptor2.cpp", "FftCorr.cpp"],
-                   depends=['FftCorr.h'],extra_compile_args=['-fopenmp'],
+      ext_modules=[Extension("_stemdescriptor", ["pystem/_stemdescriptor.c", "pystem/calculate_descriptor.c"],
+                   depends=['pystem/calculatedescriptor.h'],extra_compile_args=['-fopenmp'], libraries=['gomp']),
+                   Extension("stemdescriptor2", ["pystem/stemdescriptor2.cpp", "pystem/FftCorr.cpp"],
+                   depends=['pystem/FftCorr.h'],extra_compile_args=['-fopenmp'],
                    libraries=['fftw3','gomp'])
                   ],
-      py_modules=['stemsegmentation','stemdescriptor','stemclustering','stempower_spectrum',
-                  'stemrotational_symmetry_descriptors','stemreflection_symmetry_descriptors'],
+      packages=['pystem'],
+      #py_modules=['pystem'],
+      #py_modules=['stemsegmentation','stemdescriptor','stemclustering','stempower_spectrum',
+      #            'stemrotational_symmetry_descriptors','stemreflection_symmetry_descriptors'],
       include_dirs=numpy.distutils.misc_util.get_numpy_include_dirs(),
       description = 'A python module for segmentation of STEM images',
       long_description=long_description,

@@ -5,7 +5,6 @@ import _stemdescriptor
 import stemdescriptor2 as fftstem
 
 
-
 def get_num_shifts(window_x,window_y,grid):
     
     n_x = int(2*window_x/grid) + 1

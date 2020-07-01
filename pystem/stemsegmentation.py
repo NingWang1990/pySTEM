@@ -11,11 +11,11 @@ store descriptors, and avoid double calculating the same image
 
 import numpy as np
 from sklearn.decomposition import PCA
-from stemclustering import stemClustering
-from stemdescriptor import get_descriptor
-from stempower_spectrum import get_power_spectrum_m1, get_power_spectrum_m2
-from stemrotational_symmetry_descriptors import get_rotational_symmetry_descriptors
-from stemreflection_symmetry_descriptors import get_reflection_symmetry_descriptors
+from pystem.stemclustering import stemClustering
+from pystem.stemdescriptor import get_descriptor
+from pystem.stempower_spectrum import get_power_spectrum_m1, get_power_spectrum_m2
+from pystem.stemrotational_symmetry_descriptors import get_rotational_symmetry_descriptors
+from pystem.stemreflection_symmetry_descriptors import get_reflection_symmetry_descriptors
 from sklearn.cluster import KMeans
 from scipy.ndimage import map_coordinates
 from scipy.interpolate import NearestNDInterpolator
