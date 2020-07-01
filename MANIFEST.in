@@ -1,0 +1,1 @@
+include pystem/calculate_descriptor.h pystem/FftCorr.h pystem/*.c *.cpp pystem/*.py README.md LICENSE 

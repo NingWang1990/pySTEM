@@ -5,14 +5,19 @@ import numpy.distutils.misc_util
 from setuptools import find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
-__version__ = '0.0.14'
+__version__ = '0.0.19'
 
 setup(name='pystem',version=__version__,
-      ext_modules=[Extension("_stemdescriptor", ["pystem/_stemdescriptor.c", "pystem/calculate_descriptor.c"],
-                   depends=['pystem/calculatedescriptor.h'],extra_compile_args=['-fopenmp'], libraries=['gomp']),
-                   Extension("stemdescriptor2", ["pystem/stemdescriptor2.cpp", "pystem/FftCorr.cpp"],
-                   depends=['pystem/FftCorr.h'],extra_compile_args=['-fopenmp'],
-                   libraries=['fftw3','gomp'])
+      ext_modules=[Extension("_stemdescriptor", 
+                            ["pystem/_stemdescriptor.c", "pystem/calculate_descriptor.c"],
+                            depends=['pystem/calculatedescriptor.h'],
+                            extra_compile_args=['-fopenmp'],
+                            libraries=['gomp']),
+                   Extension("stemdescriptor2", 
+                            ["pystem/stemdescriptor2.cpp", "pystem/FftCorr.cpp"],
+                            depends=['pystem/FftCorr.h'],
+                            extra_compile_args=['-fopenmp'],
+                            libraries=['fftw3','gomp'])
                   ],
       packages=['pystem'],
       #py_modules=['pystem'],

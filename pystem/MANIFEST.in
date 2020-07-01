@@ -1,1 +1,0 @@
-include calculate_descriptor.h FftCorr.h *.c *.cpp *.py README.md LICENSE 
