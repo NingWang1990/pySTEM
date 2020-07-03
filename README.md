@@ -5,7 +5,7 @@ Automatic segmentation of Scanning Transmission Electron Microscope (STEM) image
 ## Getting Started
 
 ### Prerequisites
-python 3, numpy, scikit-learn, fftw3 
+python 3, numpy,scipy, scikit-learn, fftw3 
 ### Installing
 via pip
 ```
