@@ -24,7 +24,7 @@ via source code
 1. First make sure that FFTW3 library is installed 
 then type commands:
 git clone https://github.com/NingWang1990/pySTEM.git
-cd pySTEM/pySTEM
+cd pySTEM
 python setup.py build
 python setup.py install --user
 ```
