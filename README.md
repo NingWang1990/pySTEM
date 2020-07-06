@@ -1,6 +1,6 @@
 # Automatic segmentation of STEM images
 
-Automatic segmentation of Scanning Transmission Electron Microscope (STEM) images based on the local-correlation-map descriptor
+Automatic segmentation of Scanning Transmission Electron Microscope (STEM) images with unsupervised machine learning
 
 **Try it now**:
  [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/NingWang1990/pySTEM/master?filepath=examples)
