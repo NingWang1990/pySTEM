@@ -34,5 +34,5 @@ Examples can be found in the examples folder
 Give it a try right now by simply clicking the 'launch binder' button
 
 ### Learning more
-If you want to learn more about this project, you may read [our manuscript](https://github.com/NingWang1990/pySTEM/blob/master/paper/paper_segmentation.pdf?raw=true) that is not yet completely finished, or [our presentation] for BiGmax workshop 2020.
+If you want to learn more about this project, you may read [our manuscript](https://github.com/NingWang1990/pySTEM/blob/master/paper/paper_segmentation.pdf?raw=true) that is not yet completely finished, or [our presentation](https://github.com/NingWang1990/pySTEM/tree/master/slides) for BiGmax workshop 2020.
 
