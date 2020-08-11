@@ -2,6 +2,9 @@
 
 Automatic segmentation of Scanning Transmission Electron Microscope (STEM) images with unsupervised machine learning
 
+### Learning more
+If you want to learn more about this project, you may read [our manuscript](https://github.com/NingWang1990/pySTEM/blob/master/paper/paper_segmentation.pdf?raw=true) that is not yet completely finished, or [our presentation](https://github.com/NingWang1990/pySTEM/blob/master/slides/BiGmax2020.pdf?raw=true) for BiGmax workshop 2020.
+
 **Try it now**:
  [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/NingWang1990/pySTEM/master?filepath=examples)
 
@@ -33,6 +36,4 @@ python setup.py install --user
 Examples can be found in the examples folder 
 Give it a try right now by simply clicking the 'launch binder' button
 
-### Learning more
-If you want to learn more about this project, you may read [our manuscript](https://github.com/NingWang1990/pySTEM/blob/master/paper/paper_segmentation.pdf?raw=true) that is not yet completely finished, or [our presentation](https://github.com/NingWang1990/pySTEM/blob/master/slides/BiGmax2020.pdf?raw=true) for BiGmax workshop 2020.
 
