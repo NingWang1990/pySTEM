@@ -5,7 +5,7 @@ import numpy.distutils.misc_util
 from setuptools import find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
-__version__ = '0.0.21'
+__version__ = '0.0.22'
 
 setup(name='pystem',version=__version__,
       ext_modules=[Extension("_stemdescriptor", 
