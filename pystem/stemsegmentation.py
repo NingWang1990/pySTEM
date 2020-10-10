@@ -155,22 +155,22 @@ class segmentationSTEM:
         right_index = len(y_index)+np.arange(diff_right)
         y_index = np.concatenate((left_index, y_index, right_index))
             
-        x_grid, y_grid = np.meshgrid(x_index, y_index)
+        x_grid, y_grid = np.meshgrid(x_index, y_index,indexing='ij')
         x_grid = (x_grid / step).flatten()
         y_grid = (y_grid / step).flatten()
-        coords = np.vstack((x_grid, y_grid))
+        coords = np.vstack((x_grid, y_grid)).T
         if self.paras['soft_segmentation'] is False:
             x_labels, y_labels = np.meshgrid(np.arange(shape_labels[0]),np.arange(shape_labels[1]),indexing='ij')
             x_labels = x_labels.flatten()
             y_labels = y_labels.flatten()
             input_coords = np.vstack([x_labels, y_labels]).T
             interpolator = NearestNDInterpolator(input_coords, labels.flatten())
-            labels_up = interpolator(coords.T)
-            labels_up = np.reshape(labels_up, shape_image).T
+            labels_up = interpolator(coords)
+            labels_up = np.reshape(labels_up, shape_image)
             #labels_up = np.round(labels_up).astype(np.int32) % self.paras['n_patterns']
         else:
             labels_up = map_coordinates(labels, coords,mode='nearest')
-            labels_up = np.reshape(labels_up, (shape_image[1], shape_image[0])).T
+            labels_up = np.reshape(labels_up, (shape_image[0], shape_image[1]))
             labels_up = np.clip(labels_up,0.,self.paras['n_patterns']-1.)
  
         return labels_up
