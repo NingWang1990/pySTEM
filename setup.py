@@ -5,12 +5,17 @@ import numpy.distutils.misc_util
 from setuptools import find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
-__version__ = '0.0.22'
+__version__ = '0.0.23'
 
 setup(name='pystem',version=__version__,
       ext_modules=[Extension("_stemdescriptor", 
                             ["pystem/_stemdescriptor.c", "pystem/calculate_descriptor.c"],
                             depends=['pystem/calculatedescriptor.h'],
+                            extra_compile_args=['-fopenmp'],
+                            libraries=['gomp']),
+                   Extension("_preselectedtranslations", 
+                            ["pystem/_preselectedtranslations.c", "pystem/preselected_translations.c"],
+                            depends=['pystem/preselected_translations.h'],
                             extra_compile_args=['-fopenmp'],
                             libraries=['gomp']),
                    Extension("stemdescriptor2", 

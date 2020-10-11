@@ -2,10 +2,13 @@
 """
 todo:
 
-to remove ambiguity regarding patch_x,patch_y,window_x,window_y
-extend soft_segmentation to n_patterns > 2 cases.
-store descriptors, and avoid double calculating the same image
-
+1. store reflection planes and rotation axes 
+2. to remove ambiguity regarding patch_x,patch_y,window_x,window_y
+   extend soft_segmentation to n_patterns > 2 cases.
+3. store descriptors, and avoid double calculating the same image
+4. move underscore of the attributes to the end 
+5. None appears in Fisher separability if 'fft' method is chosen
+6. in upsampling, use patch_x and window_x to estimate left margin.
 """
 
 
@@ -13,15 +16,20 @@ import numpy as np
 from sklearn.decomposition import PCA
 from pystem.stemclustering import stemClustering
 from pystem.stemdescriptor import get_descriptor
+from pystem.preselected_translations import preselected_translations
 from pystem.stempower_spectrum import get_power_spectrum_m1, get_power_spectrum_m2
 from pystem.stemrotational_symmetry_descriptors import get_rotational_symmetry_descriptors
 from pystem.stemreflection_symmetry_descriptors import get_reflection_symmetry_descriptors
+from pystem.util import calculate_Fisher_separability
 from sklearn.cluster import KMeans
 from scipy.ndimage import map_coordinates
 from scipy.interpolate import NearestNDInterpolator
 import gc
 
-descriptors_implemented = ['power_spectrum','local_correlation_map','rotational_symmetry_maximums','reflection_symmetry_maximums']
+descriptors_implemented = ['power_spectrum','local_correlation_map',
+                           'preselected_translations',
+                           'rotational_symmetry_maximums',
+                           'reflection_symmetry_maximums']
 methods_implemented = ['direct','fft']
 class segmentationSTEM:
     def __init__(self,n_patterns=2, 
@@ -29,8 +37,15 @@ class segmentationSTEM:
                  descriptor_name='local_correlation_map',
                  n_PCA_components=5,
                  upsampling=True,
+                 # separability analysis
+                 separability_analysis=False,
+                 num_operations_with_best_sep=5,
+                 # preselected_translations,
+                 preselected_translations=None,
+                 # paras for pre-defined PCA and kmeans 
                  pca_fitted=None,kmeans_init_centers=None,
                  one_step_kmeans=False,
+                 # 
                  removing_mean=True,
                  # 
                  num_reflection_plane=10,
@@ -45,22 +60,27 @@ class segmentationSTEM:
                  ):
         
         """
-        n_patterns.........number of periodic patterns which the image is segmented into
-        patch_x............height of patch
-        patch_y............width of patch
-        window_x...........height of window
-        window_y...........width of window
-        descriptor_name....str, name of the descriptor to be used, should be in descriptors_implemented
-        n_PCA_components...number of principle components used for segmentation
-        one_step_kmeans....Boolean, if True, only run kmeans for one step.
-        max_num_points.....the maximum number of points to be chosen uniformly 
-                           from the local correlation map. 
-                           The more points we use, the more accurate the results are,
-                           but the more RAM memory is required, which may exceed the available memory.
-                           This parameter is not exactly equal to the number of points that is actually used
-                           because we use the uniform grid points.
-        parallel...........True: use openmp in the calculation of descriptors
-                           False: serial
+        n_patterns......................number of periodic patterns which the image is segmented into
+        patch_x.........................height of patch
+        patch_y.........................width of patch
+        window_x........................height of window
+        window_y........................width of window
+        descriptor_name.................str, name of the descriptor to be used, should be in descriptors_implemented
+        n_PCA_components................number of principle components used for segmentation
+        upsampling......................Boolean, if True, perform upsampling to make the output labels have the same shape
+                                                 with the input image
+        separability_analysis...........Boolean, If True, calculate Fisher's separability for every feature.
+        num_operations_with_best_sep....int, number of symmetry operations with best separability to select after seperability analysis
+        preselected_translations........2D numpy array, (n_translations, 2).
+        one_step_kmeans.................Boolean, if True, only run kmeans for one step.
+        max_num_points..................the maximum number of points to be chosen uniformly 
+                                        from the local correlation map. 
+                                        The more points we use, the more accurate the results are,
+                                        but the more RAM memory is required, which may exceed the available memory.
+                                        This parameter is not exactly equal to the number of points that is actually used
+                                        because we use the uniform grid points.
+        parallel........................True: use openmp in the calculation of descriptors
+                                        False: serial
         """
         self._PCA_components = []
         self._segmentation_labels = []
@@ -74,6 +94,9 @@ class segmentationSTEM:
                       'window_x':window_x,
                       'window_y':window_y,
                       'descriptor_name':descriptor_name,
+                      'separability_analysis':separability_analysis,
+                      'num_operations_with_best_sep':num_operations_with_best_sep,
+                      'preselected_translations':preselected_translations,
                       'removing_mean': removing_mean,
                       'radius':radius,
                       'nr':nr,
@@ -95,30 +118,37 @@ class segmentationSTEM:
     
     def get_descriptors(self,image):    
         self.check_image_validity(image)
-        if self.paras['descriptor_name'] is 'local_correlation_map':
-            descriptors = get_descriptor(image,self.paras['patch_x'],
-                                        self.paras['patch_y'],
-                                        self.paras['window_x'],
-                                        self.paras['window_y'],
-                                        self.paras['max_num_points'],
-                                        step = self.paras['step'],
-                                        parallel=self.paras['parallel'],
-                                        method=self.paras['method'],
-                                        removing_mean=self.paras['removing_mean'])
-        elif self.paras['descriptor_name'] is 'power_spectrum':
-            descriptors = get_power_spectrum_m1(image,self.paras['window_x'],self.paras['window_y'], step=self.paras['step'],logarithm=self.paras['power_spectrum_logarithm'])
-        elif self.paras['descriptor_name'] is 'rotational_symmetry_maximums':
-            descriptors = get_rotational_symmetry_descriptors(image, window_x=self.paras['window_x'], window_y=self.paras['window_y'],
+        if self.paras['descriptor_name'] == 'local_correlation_map':
+            self._descriptors, self._translation_vectors = get_descriptor(image,self.paras['patch_x'],
+                                                                self.paras['patch_y'],
+                                                                self.paras['window_x'],
+                                                                self.paras['window_y'],
+                                                                self.paras['max_num_points'],
+                                                                step = self.paras['step'],
+                                                                parallel=self.paras['parallel'],
+                                                                method=self.paras['method'],
+                                                                removing_mean=self.paras['removing_mean'])
+        elif self.paras['descriptor_name'] == 'preselected_translations':
+            self._descriptors = preselected_translations(image,self.paras['preselected_translations'],
+                                                         patch_x=self.paras['patch_x'],patch_y=self.paras['patch_y'],
+                                                         step=self.paras['step'], removing_mean=self.paras['removing_mean'])
+
+        elif self.paras['descriptor_name'] == 'power_spectrum':
+            self._descriptors = get_power_spectrum_m1(image,self.paras['window_x'],
+                                                                self.paras['window_y'], 
+                                                                step=self.paras['step'],
+                                                                logarithm=self.paras['power_spectrum_logarithm'])
+        elif self.paras['descriptor_name'] == 'rotational_symmetry_maximums':
+            self._descriptors = get_rotational_symmetry_descriptors(image, window_x=self.paras['window_x'], window_y=self.paras['window_y'],
                                                               radius=self.paras['radius'],nr=self.paras['nr'], nt=self.paras['nt'],
                                                               num_max=self.paras['num_max'],step_symmetry_analysis=self.paras['step'])
-        elif self.paras['descriptor_name'] is 'reflection_symmetry_maximums':
-            descriptors = get_reflection_symmetry_descriptors(image,window_x=self.paras['window_x'],window_y=self.paras['window_y'],
+        elif self.paras['descriptor_name'] == 'reflection_symmetry_maximums':
+            self._descriptors = get_reflection_symmetry_descriptors(image,window_x=self.paras['window_x'],window_y=self.paras['window_y'],
                                                               radius=self.paras['radius'],nr=self.paras['nr'], nt=self.paras['nt'],
                                                               num_reflection_plane=self.paras['num_reflection_plane'],
                                                               step_symmetry_analysis=self.paras['step'],num_max=self.paras['num_max'])
-        self._descriptors = descriptors 
         return self._descriptors
-
+    
     def get_PCA_components(self, image):
         
         descriptors = self.get_descriptors( image)
@@ -216,6 +246,16 @@ class segmentationSTEM:
         else:
             soft_labels = self.perform_soft_segmentation(kmeans.cluster_centers_, np.reshape(features,(-1,shape[2])))
             labels = np.reshape(soft_labels, (shape[0],shape[1]))
+        
+        # separability analysis
+        if self.paras['separability_analysis'] is True:
+            if not self.paras['descriptor_name'] == 'local_correlation_map':
+                raise NotImplementedError('separability only implemented for local_correlation_map descriptor')
+            features = np.reshape(self._descriptors, (-1, self._descriptors.shape[-1]))
+            self._Fisher_separability = calculate_Fisher_separability(features, labels.flatten())
+            ordered_indices = np.argsort(-self._Fisher_separability)
+            self._operations_with_best_sep = self._translation_vectors[ordered_indices[:self.paras['num_operations_with_best_sep']]]
+
         # this line looks useless
         self._segmentation_labels = np.zeros_like(image,dtype=np.int32) - 1
         shape_image = image.shape
@@ -239,7 +279,7 @@ class segmentationSTEM:
         #    self._segmentation_labels[(window_x+patch_x):(shape_image[0]-window_x-patch_x),(window_y+patch_y):(shape_image[0]-window_y-patch_y)] =\
         #           np.reshape(kmeans.labels_, (shape[0], shape[1]))
         #return self._segmentation_labels
-    
+
     def check_image_validity(self,image):
         if not type(image).__module__ == np.__name__:
             raise ValueError("image should be 2D numpy array")
