@@ -25,6 +25,7 @@ from sklearn.cluster import KMeans
 from scipy.ndimage import map_coordinates
 from scipy.interpolate import NearestNDInterpolator
 import gc
+import warnings
 
 descriptors_implemented = ['power_spectrum','local_correlation_map',
                            'preselected_translations',
@@ -33,10 +34,10 @@ descriptors_implemented = ['power_spectrum','local_correlation_map',
 methods_implemented = ['direct','fft']
 class segmentationSTEM:
     def __init__(self,n_patterns=2, 
-                 window_x=21,window_y=21,
                  descriptor_name='local_correlation_map',
                  n_PCA_components=5,
                  upsampling=True,
+                 sort_labels_by_pattern_size=True,
                  # separability analysis
                  separability_analysis=False,
                  num_operations_with_best_sep=5,
@@ -45,7 +46,8 @@ class segmentationSTEM:
                  # paras for pre-defined PCA and kmeans 
                  pca_fitted=None,kmeans_init_centers=None,
                  one_step_kmeans=False,
-                 # 
+                 #
+                 window_x=21,window_y=21, # required for descriptors other than preselected_translations
                  removing_mean=True,
                  # 
                  num_reflection_plane=10,
@@ -69,6 +71,11 @@ class segmentationSTEM:
         n_PCA_components................number of principle components used for segmentation
         upsampling......................Boolean, if True, perform upsampling to make the output labels have the same shape
                                                  with the input image
+        sort_labels_by_pattern_size.....Boolean. If True, sort the pattern labels by size of patterns.
+                                                 The smallest pattern has a label of 0, and the largest pattern has a label of n_patterns-1.
+                                        This hyperparameter is added because Kmeans starts with random initialization. In different runs, 
+                                        we may get different labels for the same pattern if this hyperparameter is set to False. 
+
         separability_analysis...........Boolean, If True, calculate Fisher's separability for every feature.
         num_operations_with_best_sep....int, number of symmetry operations with best separability to select after seperability analysis
         preselected_translations........2D numpy array, (n_translations, 2).
@@ -88,6 +95,10 @@ class segmentationSTEM:
             raise ValueError('descriptor_name should be in ', descriptors_implemented)
         if method not in methods_implemented:
             raise ValueError('method should be in', methods_implemented)
+        if descriptor_name == 'preselected_translations':
+            window_x = np.max(np.abs(preselected_translations[:,0]))
+            window_y = np.max(np.abs(preselected_translations[:,1]))
+
         self.paras = {'n_patterns':n_patterns,
                       'patch_x':patch_x,
                       'patch_y':patch_y,
@@ -104,6 +115,7 @@ class segmentationSTEM:
                       'step':step,
                       'num_max': num_max,
                       'upsampling':upsampling,
+                      'sort_labels_by_pattern_size':sort_labels_by_pattern_size,
                       'num_reflection_plane': num_reflection_plane,
                       'pca_fitted':pca_fitted,
                       'kmeans_init_centers':kmeans_init_centers,
@@ -150,10 +162,15 @@ class segmentationSTEM:
         return self._descriptors
     
     def get_PCA_components(self, image):
-        
-        descriptors = self.get_descriptors( image)
+         
+        descriptors = self.get_descriptors(image)
         n_components = self.paras['n_PCA_components']
         shape = descriptors.shape
+        if n_components >= shape[-1]:
+            warnings.warn('skip PCA because # of features not larger than PCA components')
+            self._pca = None
+            self._PCA_components = descriptors
+            return self._PCA_components
         if self.paras['pca_fitted'] is None:
             pca = PCA(n_components)
             self._PCA_components = np.reshape(pca.fit_transform(np.reshape(descriptors,(-1,shape[2]))), (shape[0],shape[1],n_components))
@@ -169,22 +186,9 @@ class segmentationSTEM:
         step = self.paras['step']
         shape_image = image.shape
         shape_labels = labels.shape
-        x_index = np.arange(step*shape_labels[0])
-        diff = shape_image[0] - len(x_index)
-        diff_left = int( diff / 2.)
-        diff_right = diff - diff_left
-        left_index = np.flip(-np.arange(1, 1+diff_left),axis=0)
-        right_index = len(x_index)+np.arange(diff_right)
-        x_index = np.concatenate((left_index, x_index, right_index))
-
-        y_index = np.arange(step*shape_labels[1])
-        diff = shape_image[1] - len(y_index)
-        diff_left = int( diff / 2.)
-        diff_right = diff - diff_left
-        left_index = np.flip(-np.arange(1, 1+diff_left),axis=0)
-        right_index = len(y_index)+np.arange(diff_right)
-        y_index = np.concatenate((left_index, y_index, right_index))
-            
+        
+        x_index = np.arange(shape_image[0]) - self.paras['window_x'] - self.paras['patch_x']
+        y_index = np.arange(shape_image[1]) - self.paras['window_y'] - self.paras['patch_y']
         x_grid, y_grid = np.meshgrid(x_index, y_index,indexing='ij')
         x_grid = (x_grid / step).flatten()
         y_grid = (y_grid / step).flatten()
@@ -202,8 +206,33 @@ class segmentationSTEM:
             labels_up = map_coordinates(labels, coords,mode='nearest')
             labels_up = np.reshape(labels_up, (shape_image[0], shape_image[1]))
             labels_up = np.clip(labels_up,0.,self.paras['n_patterns']-1.)
- 
+        
+        if self.paras['sort_labels_by_pattern_size'] is True:
+            labels_up = self.sort_labels_by_pattern_size(labels_up)  
+
         return labels_up
+
+    def sort_labels_by_pattern_size(self, labels):
+        """
+        labels...........2D int ndarray
+        """
+        shape = labels.shape
+        labels = labels.flatten()
+        labels_new = np.zeros_like(labels, dtype=np.int32)
+        values = np.sort(np.unique(labels))
+        sizes = np.zeros(len(values))
+        for i, value in enumerate(values):
+            sizes[i] = np.sum(labels==value)
+        ordered_indices = np.argsort(sizes)
+        values = values[ordered_indices]
+        for i, value in enumerate(values):
+            indices = np.where(labels==value)
+            labels_new[indices] = i
+        labels_new = np.reshape(labels_new, shape)
+        # also need to reorder cluster centers
+        self._kmeans.cluster_centers_ = self._kmeans.cluster_centers_[ordered_indices]
+        return labels_new
+            
 
     def perform_soft_segmentation(self, cluster_centers,features):
         """
