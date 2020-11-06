@@ -2,7 +2,7 @@ import numpy as np
 from scipy.ndimage import map_coordinates
 import heapq
 
-def get_reflection_symmetry_descriptors(image,window_x=20, window_y=20,radius=20,nr=10,nt=60, num_reflection_plane=10,num_max=5, step_symmetry_analysis=5):
+def get_reflection_symmetry_descriptors(image,window_x=20, window_y=20,radius=20,nr=20,nt=60, num_reflection_plane=10,num_max=5, step_symmetry_analysis=5):
     
     # for convenience of symmetry analysis
     if not nt%4 == 0:

@@ -29,8 +29,8 @@ import warnings
 
 descriptors_implemented = ['power_spectrum','local_correlation_map',
                            'preselected_translations',
-                           'rotational_symmetry_maximums',
-                           'reflection_symmetry_maximums']
+                           'rotational_symmetry_maximum_pooling',
+                           'reflection_symmetry_maximum_pooling']
 methods_implemented = ['direct','fft']
 class segmentationSTEM:
     def __init__(self,n_patterns=2, 
@@ -52,7 +52,7 @@ class segmentationSTEM:
                  # 
                  num_reflection_plane=10,
                  # parameters associated with rotational with rotational_symmetry_maximums descriptors
-                 radius=20,nr=20,nt=60,step=5,num_max=10,
+                 radius=20,step=5,num_max=10,
                  #parameters associated with local_correlation_map descriptors
                  patch_x=20,patch_y=20, max_num_points=100, parallel=True,
                  #
@@ -63,10 +63,10 @@ class segmentationSTEM:
         
         """
         n_patterns......................number of periodic patterns which the image is segmented into
-        patch_x.........................height of patch
-        patch_y.........................width of patch
-        window_x........................height of window
-        window_y........................width of window
+        patch_x.........................half height of patch
+        patch_y.........................half width of patch
+        window_x........................half height of window
+        window_y........................half width of window
         descriptor_name.................str, name of the descriptor to be used, should be in descriptors_implemented
         n_PCA_components................number of principle components used for segmentation
         upsampling......................Boolean, if True, perform upsampling to make the output labels have the same shape
@@ -152,11 +152,11 @@ class segmentationSTEM:
                                                                 logarithm=self.paras['power_spectrum_logarithm'])
         elif self.paras['descriptor_name'] == 'rotational_symmetry_maximums':
             self._descriptors = get_rotational_symmetry_descriptors(image, window_x=self.paras['window_x'], window_y=self.paras['window_y'],
-                                                              radius=self.paras['radius'],nr=self.paras['nr'], nt=self.paras['nt'],
+                                                              radius=self.paras['radius'],
                                                               num_max=self.paras['num_max'],step_symmetry_analysis=self.paras['step'])
         elif self.paras['descriptor_name'] == 'reflection_symmetry_maximums':
             self._descriptors = get_reflection_symmetry_descriptors(image,window_x=self.paras['window_x'],window_y=self.paras['window_y'],
-                                                              radius=self.paras['radius'],nr=self.paras['nr'], nt=self.paras['nt'],
+                                                              radius=self.paras['radius'],
                                                               num_reflection_plane=self.paras['num_reflection_plane'],
                                                               step_symmetry_analysis=self.paras['step'],num_max=self.paras['num_max'])
         return self._descriptors
