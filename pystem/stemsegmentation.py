@@ -52,7 +52,7 @@ class segmentationSTEM:
                  # 
                  num_reflection_plane=10,
                  # parameters associated with rotational with rotational_symmetry_maximums descriptors
-                 radius=20,num_max=10,
+                 radius=20,
                  #parameters associated with local_correlation_map descriptors
                  patch_x=20,patch_y=20, max_num_points=100,
                  method = 'direct',
@@ -105,10 +105,10 @@ class segmentationSTEM:
                       'preselected_translations':preselected_translations,
                       'removing_mean': True,
                       'radius':radius,
-                      'nr':nr,
-                      'nt':nt,
+                      #'nr':nr,
+                      #'nt':nt,
                       'step':stride,
-                      'num_max': num_max,
+                      'num_max': 10,
                       'upsampling':upsampling,
                       'sort_labels_by_pattern_size':sort_labels_by_pattern_size,
                       'num_reflection_plane': num_reflection_plane,
