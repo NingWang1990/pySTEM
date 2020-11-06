@@ -37,6 +37,7 @@ class segmentationSTEM:
                  descriptor_name='local_correlation_map',
                  n_PCA_components=5,
                  upsampling=True,
+                 stride=5,
                  sort_labels_by_pattern_size=True,
                  # separability analysis
                  separability_analysis=False,
@@ -51,12 +52,9 @@ class segmentationSTEM:
                  # 
                  num_reflection_plane=10,
                  # parameters associated with rotational with rotational_symmetry_maximums descriptors
-                 radius=20,step=5,num_max=10,
+                 radius=20,num_max=10,
                  #parameters associated with local_correlation_map descriptors
                  patch_x=20,patch_y=20, max_num_points=100,
-                 #
-                 power_spectrum_logarithm=True,
-                 soft_segmentation=False,
                  method = 'direct',
                  ):
         
@@ -109,7 +107,7 @@ class segmentationSTEM:
                       'radius':radius,
                       'nr':nr,
                       'nt':nt,
-                      'step':step,
+                      'step':stride,
                       'num_max': num_max,
                       'upsampling':upsampling,
                       'sort_labels_by_pattern_size':sort_labels_by_pattern_size,
@@ -119,8 +117,8 @@ class segmentationSTEM:
                       'one_step_kmeans':one_step_kmeans,
                       'n_PCA_components':n_PCA_components,
                       'max_num_points':max_num_points, 
-                      'power_spectrum_logarithm':power_spectrum_logarithm,
-                      'soft_segmentation':soft_segmentation,
+                      'power_spectrum_logarithm':True,
+                      'soft_segmentation':False,
                       'method':method}
 
     
