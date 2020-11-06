@@ -38,7 +38,7 @@ def get_good_fftsize(minsize):
 
 
 methods_implemented = ['direct', 'fft']
-def get_descriptor(image, patch_x=11,patch_y=5,window_x=51,window_y=51,num_points=100,step=3,parallel=True,removing_mean=True,method='direct'):
+def get_descriptor(image, patch_x=11,patch_y=5,window_x=51,window_y=51,num_points=100,step=3,removing_mean=True,method='direct'):
     #print ('method:', method)
     if method not in methods_implemented:
         raise ValueError('method should be in ', methods_implemented)

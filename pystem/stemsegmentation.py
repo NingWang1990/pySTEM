@@ -48,13 +48,12 @@ class segmentationSTEM:
                  one_step_kmeans=False,
                  #
                  window_x=21,window_y=21, # required for descriptors other than preselected_translations
-                 removing_mean=True,
                  # 
                  num_reflection_plane=10,
                  # parameters associated with rotational with rotational_symmetry_maximums descriptors
                  radius=20,step=5,num_max=10,
                  #parameters associated with local_correlation_map descriptors
-                 patch_x=20,patch_y=20, max_num_points=100, parallel=True,
+                 patch_x=20,patch_y=20, max_num_points=100,
                  #
                  power_spectrum_logarithm=True,
                  soft_segmentation=False,
@@ -86,8 +85,6 @@ class segmentationSTEM:
                                         but the more RAM memory is required, which may exceed the available memory.
                                         This parameter is not exactly equal to the number of points that is actually used
                                         because we use the uniform grid points.
-        parallel........................True: use openmp in the calculation of descriptors
-                                        False: serial
         """
         self._PCA_components = []
         self._segmentation_labels = []
@@ -108,7 +105,7 @@ class segmentationSTEM:
                       'separability_analysis':separability_analysis,
                       'num_operations_with_best_sep':num_operations_with_best_sep,
                       'preselected_translations':preselected_translations,
-                      'removing_mean': removing_mean,
+                      'removing_mean': True,
                       'radius':radius,
                       'nr':nr,
                       'nt':nt,
@@ -124,8 +121,7 @@ class segmentationSTEM:
                       'max_num_points':max_num_points, 
                       'power_spectrum_logarithm':power_spectrum_logarithm,
                       'soft_segmentation':soft_segmentation,
-                      'method':method,
-                      'parallel':parallel}
+                      'method':method}
 
     
     def get_descriptors(self,image):    
@@ -137,7 +133,6 @@ class segmentationSTEM:
                                                                 self.paras['window_y'],
                                                                 self.paras['max_num_points'],
                                                                 step = self.paras['step'],
-                                                                parallel=self.paras['parallel'],
                                                                 method=self.paras['method'],
                                                                 removing_mean=self.paras['removing_mean'])
         elif self.paras['descriptor_name'] == 'preselected_translations':
