@@ -33,39 +33,36 @@ descriptors_implemented = ['power_spectrum','local_correlation_map',
                            'reflection_symmetry_maximum_pooling']
 methods_implemented = ['direct','fft']
 class segmentationSTEM:
-    def __init__(self,n_patterns=2, 
+    def __init__(self,n_patterns=2, stride=5,
                  descriptor_name='local_correlation_map',
                  n_PCA_components=5,
                  upsampling=True,
-                 stride=5,
+                 preselected_translations=None,
+                 window_x=21,window_y=21, # required for descriptors other than preselected_translations
+                 num_reflection_plane=10,
+                 radius=20,
+                 patch_x=20,patch_y=20, 
+                 max_num_points=100,
+                 method = 'direct',
                  sort_labels_by_pattern_size=True,
+                 random_state=None,
                  # separability analysis
                  separability_analysis=False,
                  num_operations_with_best_sep=5,
-                 # preselected_translations,
-                 preselected_translations=None,
+                 one_step_kmeans=False,
                  # paras for pre-defined PCA and kmeans 
                  pca_fitted=None,kmeans_init_centers=None,
-                 one_step_kmeans=False,
-                 #
-                 window_x=21,window_y=21, # required for descriptors other than preselected_translations
-                 # 
-                 num_reflection_plane=10,
-                 # parameters associated with rotational with rotational_symmetry_maximums descriptors
-                 radius=20,
-                 #parameters associated with local_correlation_map descriptors
-                 patch_x=20,patch_y=20, max_num_points=100,
-                 method = 'direct',
+
                  ):
         
         """
         n_patterns......................number of periodic patterns which the image is segmented into
         stride..........................int, the stride size for both vertical and horizontal directions 
+        descriptor_name.................str, name of the descriptor to be used, should be in descriptors_implemented
         patch_x.........................half height of patch
         patch_y.........................half width of patch
         window_x........................half height of window
         window_y........................half width of window
-        descriptor_name.................str, name of the descriptor to be used, should be in descriptors_implemented
         n_PCA_components................number of principle components used for segmentation
         upsampling......................Boolean, if True, perform upsampling to make the output labels have the same shape
                                                  with the input image
@@ -73,7 +70,8 @@ class segmentationSTEM:
                                                  The smallest pattern has a label of 0, and the largest pattern has a label of n_patterns-1.
                                         This hyperparameter is added because Kmeans starts with random initialization. In different runs, 
                                         we may get different labels for the same pattern if this hyperparameter is set to False. 
-
+        random_state....................int or random state instance. It determines the random number generation for centroid initialization 
+                                        in Kmeans clustering. Default is None. 
         separability_analysis...........Boolean, If True, calculate Fisher's separability for every feature.
         num_operations_with_best_sep....int, number of symmetry operations with best separability to select after seperability analysis
         preselected_translations........2D numpy array, (n_translations, 2).
@@ -111,6 +109,7 @@ class segmentationSTEM:
                       'step':stride,
                       'num_max': 10,
                       'upsampling':upsampling,
+                      'random_state':random_state, 
                       'sort_labels_by_pattern_size':sort_labels_by_pattern_size,
                       'num_reflection_plane': num_reflection_plane,
                       'pca_fitted':pca_fitted,
@@ -259,9 +258,11 @@ class segmentationSTEM:
         else:
             max_iter = 300
         if self.paras['kmeans_init_centers'] is None:
-            kmeans = KMeans(n_clusters=self.paras['n_patterns'],max_iter=max_iter)
+            kmeans = KMeans(n_clusters=self.paras['n_patterns'],max_iter=max_iter,
+                            random_state=self.paras['random_state'])
         else:
-            kmeans = KMeans(n_clusters=self.paras['n_patterns'],max_iter=max_iter,init=self.paras['kmeans_init_centers'])
+            kmeans = KMeans(n_clusters=self.paras['n_patterns'],max_iter=max_iter,
+                            random_state=self.paras['random_state'],init=self.paras['kmeans_init_centers'])
         kmeans.fit(np.reshape(features,(-1,shape[2])))
         self._kmeans = kmeans
         if self.paras['soft_segmentation'] is False:
