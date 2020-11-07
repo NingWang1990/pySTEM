@@ -60,6 +60,7 @@ class segmentationSTEM:
         
         """
         n_patterns......................number of periodic patterns which the image is segmented into
+        stride..........................int, the stride size for both vertical and horizontal directions 
         patch_x.........................half height of patch
         patch_y.........................half width of patch
         window_x........................half height of window
