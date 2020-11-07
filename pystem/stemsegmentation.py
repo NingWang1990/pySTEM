@@ -70,7 +70,7 @@ class segmentationSTEM:
                                                  The smallest pattern has a label of 0, and the largest pattern has a label of n_patterns-1.
                                         This hyperparameter is added because Kmeans starts with random initialization. In different runs, 
                                         we may get different labels for the same pattern if this hyperparameter is set to False. 
-        random_state....................int or random state instance. It determines the random number generation for centroid initialization 
+        random_state....................int or None. It determines the random number generation for centroid initialization 
                                         in Kmeans clustering. Default is None. 
         separability_analysis...........Boolean, If True, calculate Fisher's separability for every feature.
         num_operations_with_best_sep....int, number of symmetry operations with best separability to select after seperability analysis
