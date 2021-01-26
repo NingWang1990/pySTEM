@@ -157,10 +157,12 @@ class segmentationSTEM:
                                                               step_symmetry_analysis=self.paras['step'],num_max=self.paras['num_max'])
         return self._descriptors
     
-    def get_PCA_components(self, image):
+    def get_PCA_components(self, image, descriptors=None):
+        if descriptors is None:
+            descriptors = self.get_descriptors(image)
+        elif (self.paras['verbose']>0):
+            print ("Using descriptors from argument...")
         if (self.paras['verbose']>0): print ("Perform PCA")
-         
-        descriptors = self.get_descriptors(image)
         n_components = self.paras['n_PCA_components']
         shape = descriptors.shape
         if n_components >= shape[-1]:
@@ -257,13 +259,24 @@ class segmentationSTEM:
         return scipy.special.softmax(distances,axis=1)[:,0]
 
 
-    def perform_clustering(self, image):
+    def perform_clustering(self, image, features=None, descriptors=None):
         """
         image..............2D numpy array
-        upsampling.........Boolean, if True, upsampling in order to match the shape of image.
+        features..............if given, 3D numpy array (grid_x,grid_y,n_PCA_components)
+                              if not given, compute from descriptors
+        descriptors...........if given, 3D numpy array (grid_x,grid_y,n_descriptors)
+                              if not given (and neither are features), compute from image
         """
-        image = image.astype(np.float32)
-        features = self.get_PCA_components(image)
+        if (features is None):
+           # compute features via PCA
+           image = image.astype(np.float32)
+           features = self.get_PCA_components(image, descriptors)
+        elif features.ndim != 3:
+           raise ValueError('features must be 3D (grid_x,grid_y,n_PCA_components)')
+        else:
+           if (self.paras['verbose']>1): print ("Using dimension-reduced features from argument", flush=True)
+
+
         shape = features.shape
         if (self.paras['verbose']>0): print ("Kmeans clustering", flush=True)
         if self.paras['one_step_kmeans'] is True:
