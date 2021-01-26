@@ -119,10 +119,13 @@ class segmentationSTEM:
                       'max_num_points':max_num_points, 
                       'power_spectrum_logarithm':True,
                       'soft_segmentation':False,
-                      'method':method}
+                      'method':method,
+                      'verbose':0}
 
     
     def get_descriptors(self,image):    
+        if (self.paras['verbose']>1): print ("Checking image validity", flush=True)
+        if (self.paras['verbose']>0): print ("Computing descriptors via ", self.paras['descriptor_name'], flush=True)
         self.check_image_validity(image)
         if self.paras['descriptor_name'] == 'local_correlation_map':
             self._descriptors, self._translation_vectors = get_descriptor(image,self.paras['patch_x'],
@@ -155,6 +158,7 @@ class segmentationSTEM:
         return self._descriptors
     
     def get_PCA_components(self, image):
+        if (self.paras['verbose']>0): print ("Perform PCA")
          
         descriptors = self.get_descriptors(image)
         n_components = self.paras['n_PCA_components']
@@ -166,15 +170,21 @@ class segmentationSTEM:
             return self._PCA_components
         if self.paras['pca_fitted'] is None:
             pca = PCA(n_components)
+            if (self.paras['verbose']>1):
+               print (shape[0]*shape[1], "x", shape[2], "->", shape[0]*shape[1], "x", n_components)
+
             self._PCA_components = np.reshape(pca.fit_transform(np.reshape(descriptors,(-1,shape[2]))), (shape[0],shape[1],n_components))
         else:
             pca = self.paras['pca_fitted']
+            if (self.paras['verbose']>1):
+               print ("Using pca_fitted: ", np.shape(pca))
             self._PCA_components = np.reshape(self.paras['pca_fitted'].transform(np.reshape(descriptors,(-1,shape[2]))), (shape[0],shape[1],n_components)) 
         self._pca = pca
         return self._PCA_components
 
 
     def perform_upsampling_labels(self,image, labels):
+        if (self.paras['verbose']>0): print ("Perform upsampling", flush=True)
         
         step = self.paras['step']
         shape_image = image.shape
@@ -209,6 +219,7 @@ class segmentationSTEM:
         """
         labels...........2D int ndarray
         """
+        if (self.paras['verbose']>0): print ("Sorting labels by size...", flush=True)
         shape = labels.shape
         labels = labels.flatten()
         labels_new = np.zeros_like(labels, dtype=np.int32)
@@ -232,6 +243,7 @@ class segmentationSTEM:
         cluster_centers..........ndarray of shape(n_clusters, n_features)
         features.................ndarray of shape(n_samples, n_features)
         """
+        if (self.paras['verbose']>0): print ("Soft segmentation", flush=True)
         import scipy
         (n_clusters, n_features) = cluster_centers.shape
         (n_samples, n_features_t) = features.shape
@@ -253,6 +265,7 @@ class segmentationSTEM:
         image = image.astype(np.float32)
         features = self.get_PCA_components(image)
         shape = features.shape
+        if (self.paras['verbose']>0): print ("Kmeans clustering", flush=True)
         if self.paras['one_step_kmeans'] is True:
             max_iter = 1
         else:
