@@ -85,8 +85,8 @@ static PyObject *stemdescriptor_calc(PyObject *self, PyObject *args)
       float *image = (float*) PyArray_DATA(image_array);
       float *descriptor = (float*) PyArray_DATA(descriptor_array);
       /* call the external C function to compute the local-correlation-map descriptor */
-      int value = calc_descriptor(image,descriptor,num_rows, num_cols,patch_x,patch_y,region_x,region_y,
-                                         region_grid_x,region_grid_y,n_descriptors,step,num_rows_desp,num_cols_desp, removing_mean);
+      calc_descriptor(image,descriptor,num_rows, num_cols,patch_x,patch_y,region_x,region_y,
+                      region_grid_x,region_grid_y,n_descriptors,step,num_rows_desp,num_cols_desp, removing_mean);
 
       Py_DECREF(image_array);
 #if NPY_API_VERSION >= 0x0000000c
