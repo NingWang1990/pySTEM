@@ -70,21 +70,30 @@ class One {
       static inline double apply (double x) { return 1.; }
 };
 
-FftCorr::FftCorr (WindowFFT &wFFT, int patchSizeX, int patchSizeY)
-   : px(patchSizeX), py(patchSizeY)
+FftCorr::FftCorr (WindowFFT &wFFT, int patchSizeX, int patchSizeY,
+                  int regionSizeX, int regionSizeY)
+   : px(patchSizeX), py(patchSizeY),
+     rx(regionSizeX), ry(regionSizeY),
+     norm2Threshold(0.)
 {
-   assert(px>0 && px < wFFT.Nx);
-   assert(py>0 && py < wFFT.Ny);
+   assert(px>0);
+   assert(py>0);
+   assert(rx>0);
+   assert(ry>0);
+   assert(rx + px <= wFFT.Nx);
+   assert(ry + py <= wFFT.Ny);
    filter1 = (T_COMPLEX*)fftw_alloc_complex(wFFT.getSize ());
    work1 = (T_COMPLEX*)fftw_alloc_complex(wFFT.getSize ());
    work2 = (T_COMPLEX*)fftw_alloc_complex(wFFT.getSize ());
-   workNorm = new double[(wFFT.Nx - px) * (wFFT.Ny - py)];
+   workNorm = new double[rx * ry];
+   workMean = new double[rx * ry];
    wFFT.toRecSpace1 (px, py, filter1);
    //wFFT.toRecSpace<double,One> (px, py, (double*)filter1, wFFT.Nx, filter1);
 }
 
 FftCorr::~FftCorr ()
 {
+   delete [] workMean;
    delete [] workNorm;
    fftw_free (work2);
    fftw_free (work1);

@@ -10,6 +10,15 @@
 #include <new>
 //#include <iostream>
 
+// function pointer to one of the computational routines within FftCorr
+typedef void (FftCorr::*CalcFunc)(const float*,int, int, int, WindowFFT&, double*);
+//template<>
+//void FftCorr::getPearsonCorrMap<float>(const float*,int,int,int,WindowFFT&,double);
+//template<>
+//void FftCorr::getCorrMap<float>(const float*,int,int,int,WindowFFT&,double);
+static PyObject *stemdescriptor2_driver(PyObject *self_, PyObject *args, CalcFunc calcMap);
+
+
 extern "C" {
 
 // --- WindowFFT boilerplate
@@ -58,6 +67,7 @@ WindowFFT_init(Pywrap_WindowFFT *self, PyObject *args, PyObject *kwds)
     }
 
     // call constructor
+    using namespace std;
     new (&self->windowFFT) WindowFFT(Nx, Ny);
 
     // check that this worked
@@ -75,8 +85,22 @@ WindowFFT_init(Pywrap_WindowFFT *self, PyObject *args, PyObject *kwds)
 }
 
 
-/* Available functions */
-static PyObject *stemdescriptor2_calc(PyObject *self, PyObject *args);
+/* --- Available functions */
+/*  define the non-mean correlation map function */
+static PyObject *stemdescriptor2_calc(PyObject *self_, PyObject *args)
+{
+   return stemdescriptor2_driver(self_, args, &FftCorr::getCorrMap<float>);
+}
+
+/*  define the non-mean correlation map function */
+static PyObject *stemdescriptor2_pearson(PyObject *self_, PyObject *args)
+{
+   return stemdescriptor2_driver(self_, args, &FftCorr::getPearsonCorrMap<float>);
+}
+
+// closing bracket of extern "C"
+}
+
 
 /* Module specification */
 
@@ -97,6 +121,9 @@ PyMODINIT_FUNC PyInit_stemdescriptor2(void)
    static PyMethodDef WindowFFT_methods[] = {
       // declare "calc" to call "stemdescriptor_calc"
       {"calc", stemdescriptor2_calc, METH_VARARGS,
+       "This function calculates the local-correlation-map descriptor" },
+      // declare "calc" to call "stemdescriptor_calc"
+      {"calc_pearson", stemdescriptor2_pearson, METH_VARARGS,
        "This function calculates the local-correlation-map descriptor" },
 
       {NULL}  /* Sentinel */
@@ -136,8 +163,10 @@ PyMODINIT_FUNC PyInit_stemdescriptor2(void)
    return m;
 }
 
-/*  define the function */
-static PyObject *stemdescriptor2_calc(PyObject *self_, PyObject *args)
+/*  define the python driver function
+    calcMap is one of FftCorr's "getCorrMap<float>" or "getPearsonCorrMap<float>"
+ */
+static PyObject *stemdescriptor2_driver(PyObject *self_, PyObject *args, CalcFunc calcMap)
 {
    Pywrap_WindowFFT *self = (Pywrap_WindowFFT *)self_;
    PyObject *image_obj=NULL;
@@ -147,10 +176,10 @@ static PyObject *stemdescriptor2_calc(PyObject *self_, PyObject *args)
    if (!PyArg_ParseTuple(args,"OOiiiiiiiiiiii",&image_obj,&descriptor_obj,&num_rows,&num_cols,&patch_x,&patch_y,
             &region_x,&region_y,&region_grid_x,&region_grid_y,&n_descriptors,&step,&num_rows_desp,&num_cols_desp))
       return NULL;
-   int Rx = self->windowFFT.Nx - (2*patch_y + 1), Rx2 = Rx/2;
-   int Ry = self->windowFFT.Ny - (2*patch_x + 1), Ry2 = Ry/2;
-   if (Rx < region_y || Ry < region_x)  {
-      PyErr_SetString(PyExc_ValueError, "Requested region is to large for FFT dimensions");
+   if (   2 * (region_y+patch_y + 1) > self->windowFFT.Nx
+       || 2 * (region_x+patch_x + 1) > self->windowFFT.Ny)
+   {
+      PyErr_SetString(PyExc_ValueError, "Requested region is too large for FFT dimensions");
       return NULL;
    }
    /* Interpret the input objects as numpy arrays. */
@@ -186,13 +215,32 @@ static PyObject *stemdescriptor2_calc(PyObject *self_, PyObject *args)
    //cout << "Rx=" << Rx << "Ry=" << Ry << endl;
    //cout << "num_cols_desp=" << num_cols_desp << endl;
    //cout << "n_descriptors=" << n_descriptors << endl;
+   //cout.flush ();
 
    // --- the actual core of functionality
+   double sum = 0., sum2 = 0.;
 #pragma omp parallel
    {
+      // --- determine global norm of intensity variation
+#pragma omp for simd reduction(+:sum, sum2)
+      for (ssize_t i = 0; i < num_rows * num_cols; i++)  {
+         sum += image[i];
+         sum2 += image[i] * image[i];
+      }
+      double imSize = double(num_rows) * num_cols;
+      double norm2 = (sum2 - sum*sum/imSize)/imSize;
+
+      // --- set up fftCorr (incl. work arrays)
       // fftCorr has fast-running index first
-      FftCorr fftCorr(self->windowFFT, 2*patch_y + 1, 2*patch_x + 1);
-      double *res = new double[Rx * Ry];
+      FftCorr fftCorr(self->windowFFT, 2*patch_y + 1, 2*patch_x + 1,
+                      2*region_y + 1, 2 * region_x + 1);
+      double *res = new double[(2*region_x+1) * (2*region_y+1)];
+      int ldr = 2 * region_y + 1; // stride for 2nd index in res
+
+      // set patch threshold to 2% of average global intensity variation
+      // for a patch below this threshold, the correlation map is set to zero
+      fftCorr.norm2Threshold = 0.004 * norm2 * (2 * patch_x + 1) * (2 * patch_y + 1);
+
 #pragma omp for collapse(2)
       for (int i=patch_x+region_x;i<num_rows-patch_x-region_x;i+=step) {
          for (int j=patch_y+region_y;j<num_cols-patch_y-region_y;j+=step) {
@@ -200,12 +248,12 @@ static PyObject *stemdescriptor2_calc(PyObject *self_, PyObject *args)
             int j_d = (j-patch_y-region_y)/step;
 
             // fftCorr has fast-running index first
-            fftCorr.getCorrMap (image, num_cols, j, i, self->windowFFT,
+            (fftCorr.*calcMap) (image, num_cols, j, i, self->windowFFT,
                                 res);
-            int offsetDesc = n_descriptors * (i_d * num_cols_desp + j_d);
+            ssize_t offsetDesc = n_descriptors * (i_d * num_cols_desp + j_d);
             for (int k = -region_x ; k <= region_x; k+=region_grid_x)
                for (int l = -region_y ; l <= region_y; l+=region_grid_y)
-                  descriptor[offsetDesc++] = res[(k + Ry2)*Rx + l + Rx2];
+                  descriptor[offsetDesc++] = res[(k + region_x)*ldr + l + region_y];
          }	
       }
       delete [] res;
@@ -222,6 +270,4 @@ static PyObject *stemdescriptor2_calc(PyObject *self_, PyObject *args)
 
 }
 
-// closing bracket of extern "C"
-}
 

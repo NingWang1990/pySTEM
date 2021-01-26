@@ -75,6 +75,9 @@ def get_descriptor(image, patch_x=11,patch_y=5,window_x=51,window_y=51,num_point
     if method == 'direct':
         _stemdescriptor.calc(np.reshape(image,-1),descriptors,num_rows,num_cols,patch_x,patch_y,
                           window_x,window_y,grid,grid,n_descriptors,step,num_rows_desp,num_cols_desp,int(removing_mean))
+    elif removing_mean:
+        fft.calc_pearson(np.reshape(image,-1),descriptors,num_rows,num_cols,patch_x,patch_y,
+                          window_x,window_y,grid,grid,n_descriptors,step,num_rows_desp,num_cols_desp)
     else:
         fft.calc(np.reshape(image,-1),descriptors,num_rows,num_cols,patch_x,patch_y,
                           window_x,window_y,grid,grid,n_descriptors,step,num_rows_desp,num_cols_desp)

@@ -156,19 +156,30 @@ void WindowFFT::toRealSpace (int nx, int ny, T_COMPLEX* in, T* out, int strideOu
 class FftCorr {
    protected:
       T_COMPLEX *filter1, *work1, *work2;
-      double *workNorm;
-      int px, py;
+      double *workNorm, *workMean;
+      int px, py, rx, ry;
    public:
-      FftCorr (WindowFFT &, int patchSizeX, int patchSizeY);
+      FftCorr (WindowFFT &, int patchSizeX, int patchSizeY,
+               int regionSizeX, int regionSizeY);
       ~FftCorr ();
+
+      /// Threshold for norm^2. If less, correlation map is set to 0
+      double norm2Threshold;
 
       template<class T>
       void getCorrMap (const T* image, int width,
                        int cx, int cy,
                        WindowFFT &,
                        double *out);
+
+      template<class T>
+      void getPearsonCorrMap (const T* image, int width,
+                              int cx, int cy,
+                              WindowFFT &,
+                              double *out);
 };
 
+/// get x[i] = x[i] * conj(y[i])
 static void mulConj (int N, fftw_complex *inOut, const fftw_complex *in2)
 {
    for (int i = 0; i < N; ++i)  {
@@ -186,19 +197,110 @@ void FftCorr::getCorrMap (const T* image, int width,
                           WindowFFT &wFFT,
                           double *out)
 {
-   int offset = cx - wFFT.Nx/2 + width * (cy - wFFT.Ny/2);
-   int resX = wFFT.Nx - px, resY = wFFT.Ny - py;
+   // G=(Gx,Gy)
+   // I(x,y) = sum(G) I(G) * exp(i (Gx * x Gy *y))
+   // => I(G) = 1/NFFT sum(x,y) I(x,y) * exp(-i (Gx*x + Gy*y))
+
+   // filter1 is sum(x=1..px,y=1..py) exp(-i * (Gx * x + Gy * y)
+
+   // the large image patch goes from -p{xy}/2 - r{xy}/2 .. (1-p{xy})/2 + (1-p{xy}/2)
+   // starting point of the large image patch
+   int offset = cx - rx/2 - px/2 + width * (cy - ry/2 - py/2);
+   // size of the large image patch
+   int rpx = rx + px - 1;
+   int rpy = ry + py - 1;
+
    // compute norm
-   wFFT.toRecSpace2 (wFFT.Nx, wFFT.Ny, image + offset, width, work1);
+   // work1 => (I^2)(G) * NFFT
+   wFFT.toRecSpace2 (rpx, rpy, image + offset, width, work1);
    mulConj (wFFT.getSize (), work1, filter1);
-   wFFT.toRealSpace<double,WindowFFT::SquareRootInv> (resX, resY, work1, workNorm, resX);
+   // work1 now contains I^2 summed over the small p{xy} patch
+   if (norm2Threshold == 0.)  {
+      // one-stage compute of 1/sqrt(norm2) (if not norm is never 0)
+      wFFT.toRealSpace<double,WindowFFT::SquareRootInv> (rx, ry, work1, workNorm, rx);
+   } else {
+      // two-stage compute: first compute norm2
+      wFFT.toRealSpace(rx, ry, work1, workNorm, rx);
+      // ... and now the inverse if the norm is large enough
+      double n2Thresh = norm2Threshold * wFFT.getSize ();
+#     pragma omp simd
+      for (int i = 0; i < rx * ry; ++i)  {
+         workNorm[i] = (workNorm[i] >= n2Thresh) ? 1./sqrt(workNorm[i]) : 0.;
+      }
+   }
    // compute non-normalized correlation
-   wFFT.toRecSpace (wFFT.Nx, wFFT.Ny, image + offset, width, work1);
+   // large patch
+   wFFT.toRecSpace (rpx, rpy, image + offset, width, work1);
+   // small patch
    wFFT.toRecSpace (px, py, image + cx - px/2 + width * (cy - py/2), width, work2);
    mulConj (wFFT.getSize (), work1, work2);
-   wFFT.toRealSpace (resX, resY, work1, out, resX);
+   wFFT.toRealSpace (rx, ry, work1, out, rx);
    // normalize
-   double n0 = workNorm[resX/2 + resX * (resY/2)];
-   for (int i = 0; i < resX * resY; ++i)
+   double n0 = workNorm[rx/2 + rx * (ry/2)];
+   for (int i = 0; i < rx * ry; ++i)
       out[i] *= n0 * workNorm[i];
+}
+
+template<class T>
+void FftCorr::getPearsonCorrMap (const T* image, int width,
+                                 int cx, int cy,
+                                 WindowFFT &wFFT,
+                                 double *out)
+{
+   // G=(Gx,Gy)
+   // I(x,y) = sum(G) I(G) * exp(i (Gx * x Gy *y))
+   // => I(G) = 1/NFFT sum(x,y) I(x,y) * exp(-i (Gx*x + Gy*y))
+
+   // filter1 is sum(x=1..px,y=1..py) exp(-i * (Gx * x + Gy * y)
+   int offset = cx - rx/2 - px/2 + width * (cy - ry/2 - py/2);
+   int rpx = rx + px - 1;
+   int rpy = ry + py - 1;
+
+   // --- compute norm^2 without mean subtraction
+   // work1 => (I^2)(G) * NFFT
+   wFFT.toRecSpace2 (rpx, rpy, image + offset, width, work1);
+   mulConj (wFFT.getSize (), work1, filter1);
+   wFFT.toRealSpace (rx, ry, work1, workNorm, rx);
+   // => workNorm now contains norm^2(I)
+
+   // --- compute mean
+   // work1 => I(G) * NFFT
+   wFFT.toRecSpace (rpx, rpy, image + offset, width, work1);
+   // work2 => I(G) * NFFT
+   memcpy (work2, work1, sizeof (T_COMPLEX) * wFFT.getSize ());
+   mulConj (wFFT.getSize (), work2, filter1);
+   wFFT.toRealSpace (rx, ry, work2, workMean, rx);
+   // workMean now contains mean * px * py * NFFT
+
+   // --- compute norm2 with mean subtraction
+   // mean = sum(G) I(-G) * sum(px,py) exp(-i (Gx*px + Gy*py))
+   double meanNorm = 1. / sqrt(double(px) * py * wFFT.getSize ());
+#  pragma omp simd
+   for (ssize_t i = 0; i < rx * ry; i++)  {
+      workMean[i] *= meanNorm; // prefactor for mean
+      workNorm[i] -= workMean[i] * workMean[i];
+   }
+   // => workMean now contains mean * sqrt(px * py * NFFT)
+   // => workNorm now contains norm^2(I - mean) * NFFT
+   int i0 = rx/2 + rx * (ry/2);
+   double n2Thresh = norm2Threshold * wFFT.getSize ();
+   if (workNorm[i0] < n2Thresh)  {
+      // all zero
+      memset (out, 0, sizeof(double) * rx * ry);
+      out[i0] = 1.;
+      return;
+   }
+
+   // compute non-normalized correlation
+   // work2 => I(x,y) filtered
+   wFFT.toRecSpace (px, py, image + cx - px/2 + width * (cy - py/2), width, work2);
+   mulConj (wFFT.getSize (), work1, work2);
+   wFFT.toRealSpace (rx, ry, work1, out, rx);
+   // normalize
+#  pragma omp simd
+   for (int i = 0; i < rx * ry; ++i)  {
+      out[i] = (workNorm[i] >= n2Thresh)
+             ? (out[i] - workMean[i0] * workMean[i]) / sqrt(workNorm[i0] * workNorm[i])
+             : 0.;
+   }
 }
