@@ -5,7 +5,7 @@ import numpy.distutils.misc_util
 from setuptools import find_packages
 with open("README.md", "r") as fh:
     long_description = fh.read()
-__version__ = '0.0.23'
+__version__ = '0.0.24'
 
 setup(name='pystem',version=__version__,
       ext_modules=[Extension("_stemdescriptor", 
@@ -41,7 +41,9 @@ setup(name='pystem',version=__version__,
       install_requires=[
                         'numpy>=1.17.0',
                         'scipy>=1.2.0',
-                        'scikit-learn>=0.21.0'],
+                        'scikit-learn>=0.21.0',
+#                        'colorsys',
+                        'numba'],
       classifiers = [
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
