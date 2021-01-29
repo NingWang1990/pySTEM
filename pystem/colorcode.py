@@ -36,7 +36,7 @@ def colorcode_legend(labels,saturation=0.2):
    label........array with labels
    saturation...saturation value (in hsv model)
    """
-   maxlabel=np.max(labels)
+   maxlabel=np.max(labels)+1
    res = np.zeros((1,maxlabel,3))
    ch = colorcode_hue(maxlabel)
    for x in range(maxlabel):
