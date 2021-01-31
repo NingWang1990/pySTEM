@@ -1,1 +1,1 @@
-include pystem/calculate_descriptor.h pystem/FftCorr.h pystem/*.c *.cpp pystem/*.py README.md LICENSE 
+include pystem/calculate_descriptor.h pystem/FftCorr.h pystem/preselected_translations.h pystem/*.c pystem/*.cpp pystem/*.py README.md LICENSE 
