@@ -3,6 +3,7 @@
 */
 
 #include <Python.h>
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 #include "calculate_descriptor.h"
 
@@ -58,23 +59,22 @@ static PyObject *stemdescriptor_calc(PyObject *self, PyObject *args)
       		                             &region_x,&region_y,&region_grid_x,&region_grid_y,&n_descriptors,&step,&num_rows_desp,&num_cols_desp,&removing_mean))
        	  return NULL;
       /* Interpret the input objects as numpy arrays. */
-      PyObject * image_array=NULL;
-      image_array = PyArray_FROM_OTF(image_obj,NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
+      PyArrayObject *image_array = (PyArrayObject*)PyArray_FROM_OTF(image_obj,NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
 
       /* throw an exception if that didn't work */
-      if (image_array == NULL){
+      if (image_array == NULL || ! PyArray_CheckExact(image_array)) {
           Py_XDECREF(image_array);
           return NULL;
       }
       /* Interpret the output objects as numpy arrays. */
-      PyObject * descriptor_array=NULL;
+      PyArrayObject * descriptor_array=NULL;
 #if NPY_API_VERSION >= 0x0000000c
-      descriptor_array = PyArray_FROM_OTF(descriptor_obj,NPY_FLOAT32,NPY_ARRAY_INOUT_ARRAY2);
+      descriptor_array = (PyArrayObject *)PyArray_FROM_OTF(descriptor_obj,NPY_FLOAT32,NPY_ARRAY_INOUT_ARRAY2);
 #else
-      descriptor_array = PyArray_FROM_OTF(descriptor_obj,NPY_FLOAT32,NPY_ARRAY_INOUT_ARRAY);
+      descriptor_array = (PyArrayObject *)PyArray_FROM_OTF(descriptor_obj,NPY_FLOAT32,NPY_ARRAY_INOUT_ARRAY);
 #endif
       /* throw an exception if that didn't work */
-      if (descriptor_array == NULL){
+      if (descriptor_array == NULL || !PyArray_CheckExact(descriptor_array)) {
 	  Py_XDECREF(image_array);
 #if NPY_API_VERSION >= 0x0000000c
           PyArray_DiscardWritebackIfCopy(descriptor_array);
