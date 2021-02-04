@@ -39,11 +39,11 @@ setup(name='pystem',version=__version__,
       maintainer_email = 'nwang@mpie.de',
       license = 'GNU GPLv3',
       install_requires=[
+      #                 'numba',
                         'numpy>=1.17.0',
                         'scipy>=1.2.0',
-                        'scikit-learn>=0.21.0',
-#                        'colorsys',
-                        'numba'],
+                        'scikit-learn>=0.21.0'
+      ],
       classifiers = [
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',

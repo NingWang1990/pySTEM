@@ -1,6 +1,12 @@
 import colorsys
-import numba
 import numpy as np
+try:
+   import numba
+   speedup = numba.njit
+except ImportError:
+   def speedup(func): return func
+   from warnings import warn
+   warn ("Couldn't import 'numba' to speed up colorcoding. 'colorcode' will work, but be very slow.")
 
 """
    Auxiliary module for color-coding images according to the segmentation.
@@ -12,7 +18,7 @@ import numpy as np
    colorcode_legend...Returns an array suitable to be used as a legend
 """
 
-newhsv = numba.njit (colorsys.hsv_to_rgb)
+newhsv = speedup (colorsys.hsv_to_rgb)
 
 def colorcode_hue(n_label):
     """
@@ -68,7 +74,7 @@ def colorcode(image,labels,colors=None,saturation=0.2,im0=None,im1=None):
     if im1 is None:
        im1=np.max(image)
     im_mag = im1 - im0
-    @numba.njit
+    @speedup
     def innercolorcode (image,labels,rgbimg,colors):
         for (x,y) in np.ndindex(image.shape):
             #hue = offset+scale * labels[x,y]
