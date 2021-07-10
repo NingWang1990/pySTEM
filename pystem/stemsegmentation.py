@@ -146,11 +146,11 @@ class segmentationSTEM:
                                                                 self.paras['window_y'], 
                                                                 step=self.paras['step'],
                                                                 logarithm=self.paras['power_spectrum_logarithm'])
-        elif self.paras['descriptor_name'] == 'rotational_symmetry_maximums':
+        elif self.paras['descriptor_name'] == 'rotational_symmetry_maximum_pooling':
             self._descriptors = get_rotational_symmetry_descriptors(image, window_x=self.paras['window_x'], window_y=self.paras['window_y'],
                                                               radius=self.paras['radius'],
                                                               num_max=self.paras['num_max'],step_symmetry_analysis=self.paras['step'])
-        elif self.paras['descriptor_name'] == 'reflection_symmetry_maximums':
+        elif self.paras['descriptor_name'] == 'reflection_symmetry_maximum_pooling':
             self._descriptors = get_reflection_symmetry_descriptors(image,window_x=self.paras['window_x'],window_y=self.paras['window_y'],
                                                               radius=self.paras['radius'],
                                                               num_reflection_plane=self.paras['num_reflection_plane'],
@@ -321,9 +321,9 @@ class segmentationSTEM:
         #if self.paras['descriptor_name'] is 'power_spectrum':
         #    self._segmentation_labels[window_x:(shape_image[0]-window_x),window_y:(shape_image[1]-window_y)] =\
         #           np.reshape(kmeans.labels_, (shape[0], shape[1]))
-        #elif self.paras['descriptor_name'] is 'rotational_symmetry_maximums':
+        #elif self.paras['descriptor_name'] is 'rotational_symmetry_maximum_pooling':
         #    self._segmentation_labels = np.reshape(kmeans.labels_, (shape[0], shape[1]))
-        #elif self.paras['descriptor_name'] is 'reflection_symmetry_maximums':
+        #elif self.paras['descriptor_name'] is 'reflection_symmetry_maximum_pooling':
         #    self._segmentation_labels = np.reshape(kmeans.labels_, (shape[0], shape[1]))
         #elif self.paras['descriptor_name'] is 'local_correlation_map':
         #    self._segmentation_labels[(window_x+patch_x):(shape_image[0]-window_x-patch_x),(window_y+patch_y):(shape_image[0]-window_y-patch_y)] =\
