@@ -3,8 +3,13 @@ import numpy as np
 try:
    import numba
    speedup = numba.njit
+   def typed_list(colors):
+      typed_colors = numba.typed.List ()
+      [typed_colors.append(x) for x in colors]
+      return typed_colors
 except ImportError:
    def speedup(func): return func
+   def typed_list(colors): return colors
    from warnings import warn
    warn ("Couldn't import 'numba' to speed up colorcoding. 'colorcode' will work, but be very slow.")
 
@@ -83,5 +88,5 @@ def colorcode(image,labels,colors=None,saturation=0.2,im0=None,im1=None):
             hue=colors[labels[x,y]]
     #        rgbimg[x,y,:] = colorsys.hsv_to_rgb(hue,saturation,(image[x,y]-im0)/im_mag)
             rgbimg[x,y,:] = newhsv(hue,saturation,(image[x,y]-im0)/im_mag)
-    innercolorcode (image,labels,rgbimg,colors)
+    innercolorcode (image,labels,rgbimg,typed_list(colors))
     return rgbimg
